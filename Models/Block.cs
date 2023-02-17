@@ -6,6 +6,7 @@
         public string? BlockName { get; set; }
         public int RoomCount { get; set; } = 0;
         public int AvailableRooms { get; set; } = 0;
+        public int StudentCount { get; set; } = 0;
         public int RoomSpace { get; set; }
         public string? BlockGender { get; set; }
         public Guid HallId { get; set; }

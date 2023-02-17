@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HallManagementTest2.Models;
+using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Mvc;
@@ -12,15 +13,13 @@ namespace HallManagementTest2.Controllers
     {
         private readonly IBlockRepository _blockRepository;
         private readonly IMapper _mapper;
-        private readonly IRoomRepository _roomRepository;
         private readonly IHallRepository _hallRepository;
 
         public BlockController(IBlockRepository blockRepository, IMapper mapper,
-                                IRoomRepository roomRepository, IHallRepository hallRepository)
+                                IHallRepository hallRepository)
         {
             _blockRepository = blockRepository;
             _mapper = mapper;
-            _roomRepository = roomRepository;
             _hallRepository = hallRepository;
         }
 
@@ -59,8 +58,7 @@ namespace HallManagementTest2.Controllers
             await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
             await _hallRepository.UpdateBlockCount(request.HallId, hall);
 
-
             return Ok(block);
-        }
+        }        
     }
 }

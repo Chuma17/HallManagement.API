@@ -22,7 +22,16 @@ namespace HallManagementTest2.Repositories.Implementations
 
         public async Task<Block> DeleteBlockAsync(Guid blockId)
         {
-            throw new NotImplementedException();
+            var block = await GetBlockAsync(blockId);
+
+            if (block != null)
+            {
+                _context.Blocks.Remove(block);
+                await _context.SaveChangesAsync();
+                return block;
+            }
+
+            return null;
         }
 
         public async Task<bool> Exists(Guid? blockId)
@@ -33,6 +42,26 @@ namespace HallManagementTest2.Repositories.Implementations
         public async Task<Block> GetBlockAsync(Guid? blockId)
         {
             return await _context.Blocks.Include(s => s.Rooms).FirstOrDefaultAsync(x => x.BlockId == blockId);
+        }
+
+        public async Task<List<Block>> GetBlocksAsync()
+        {
+            var blocks = _context.Blocks.ToListAsync();
+            return await blocks;
+        }
+
+        public async Task<List<Block>> GetBlocksInHall(Guid hallId)
+        {
+            var blocks = await GetBlocksAsync();
+            var blocksInHall = new List<Block>();
+            foreach (var block in blocks)
+            {
+                if (block.HallId == hallId)
+                {
+                    blocksInHall.Add(block);
+                }
+            }
+            return blocksInHall;
         }
 
         public async Task<Block> UpdateBlock(Guid blockId, Block request)
@@ -49,6 +78,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingBlock.RoomSpace = request.RoomSpace;
                 existingBlock.AvailableRooms = request.AvailableRooms;
                 existingBlock.RoomCount= request.RoomCount;
+                existingBlock.StudentCount = request.StudentCount;
 
                 await _context.SaveChangesAsync();
                 return existingBlock;

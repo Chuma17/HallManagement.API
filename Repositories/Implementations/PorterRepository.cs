@@ -2,6 +2,7 @@
 using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace HallManagementTest2.Repositories.Implementations
 {
@@ -70,6 +71,20 @@ namespace HallManagementTest2.Repositories.Implementations
             var porter = await _context.Porters.ToListAsync();
 
             return porter;
+        }
+
+        public async Task<List<Porter>> GetPortersInHall(Guid hallId)
+        {
+            var porters = await GetPorters();
+            var portersInHall = new List<Porter>();
+            foreach (var porter in porters)
+            {
+                if (porter.HallId == hallId)
+                {
+                    portersInHall.Add(porter);
+                }
+            }
+            return portersInHall;
         }
 
         public async Task<Porter> UpdatePorter(Guid porterId, Porter request)

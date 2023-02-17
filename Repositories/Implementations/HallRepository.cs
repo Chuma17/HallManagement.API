@@ -1,6 +1,5 @@
 ﻿using HallManagementTest2.Data;
 using HallManagementTest2.Models;
-using System.Linq;
 using HallManagementTest2.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

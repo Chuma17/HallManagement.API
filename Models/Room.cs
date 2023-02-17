@@ -12,6 +12,7 @@ namespace HallManagementTest2.Models
         public string? RoomNumber { get; set; }
         public int MaxOccupants { get; set; }
         public int AvailableSpace { get; set; }
+        public int StudentCount { get; set; } = 0;
         public string? RoomGender { get; set; }
         public bool IsUnderMaintenance { get; set; } = false;
         public bool IsFull { get; set; } = false;

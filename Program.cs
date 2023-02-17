@@ -1,8 +1,8 @@
 using FluentValidation.AspNetCore;
 using HallManagementTest2.Data;
+using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
-using HallManagementTest2.Requests;
 using HallManagementTest2.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +33,8 @@ builder.Services.AddScoped<IHallRepository, HallRepository>();
 builder.Services.AddScoped<IBlockRepository, BlockRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 builder.Services.AddScoped<IStudentDeviceRepository, StudentDeviceRepository>();
-builder.Services.AddScoped<IComplaintForm, ComplaintFormRepository>();
+builder.Services.AddScoped<IComplaintFormRepository, ComplaintFormRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<AuthService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

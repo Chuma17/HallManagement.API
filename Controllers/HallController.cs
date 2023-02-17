@@ -1,14 +1,10 @@
 ﻿using AutoMapper;
 using HallManagementTest2.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using HallManagementTest2.Requests.Add;
 using HallManagementTest2.Requests.Update;
 using HallManagementTest2.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using System.Linq;
-using HallManagementTest2.Repositories.Implementations;
 using System.Security.Claims;
 
 namespace HallManagementTest2.Controllers
@@ -21,14 +17,29 @@ namespace HallManagementTest2.Controllers
         private readonly IMapper _mapper;
         private readonly IHallAdminRepository _hallAdminRepository;
         private readonly IHallTypeRepository _hallTypeRepository;
+        private readonly IStudentDeviceRepository _studentDeviceRepository;
+        private readonly IStudentRepository _studentRepository;
+        private readonly IRoomRepository _roomRepository;
+        private readonly IPorterRepository _porterRepository;
+        private readonly IBlockRepository _blockRepository;
+        private readonly IComplaintFormRepository _complaintFormRepository;
 
         public HallController(IHallRepository hallRepository, IMapper mapper,
-                                IHallAdminRepository hallAdminRepository, IHallTypeRepository hallTypeRepository)
+                                IHallAdminRepository hallAdminRepository, IHallTypeRepository hallTypeRepository,
+                                IStudentDeviceRepository studentDeviceRepository, IStudentRepository studentRepository,
+                                IRoomRepository roomRepository, IPorterRepository porterRepository,
+                                IBlockRepository blockRepository, IComplaintFormRepository complaintFormRepository)
         {
             _hallRepository = hallRepository;
             _mapper = mapper;
             _hallAdminRepository = hallAdminRepository;
             _hallTypeRepository = hallTypeRepository;
+            _studentDeviceRepository = studentDeviceRepository;
+            _studentRepository = studentRepository;
+            _roomRepository = roomRepository;
+            _porterRepository = porterRepository;
+            _blockRepository = blockRepository;
+            _complaintFormRepository = complaintFormRepository;
         }
 
         //Retrieving all halls
@@ -154,7 +165,7 @@ namespace HallManagementTest2.Controllers
             if (roomsInHall == null)
             {
                 return NotFound();
-            }            
+            }
 
             var rooms = roomsInHall.Rooms;
 
@@ -219,7 +230,7 @@ namespace HallManagementTest2.Controllers
             if (!hallTypeExists)
             {
                 return BadRequest("The specified hall type ID is invalid.");
-            }                        
+            }
 
             var hallType = await _hallTypeRepository.GetHallTypeAsync(request.HallTypeId);
             var hallTypeRoomSpace = hallType.RoomSpaceCount;
@@ -239,8 +250,44 @@ namespace HallManagementTest2.Controllers
         {
             if (await _hallRepository.Exists(hallId))
             {
+                var studentDevices = await _studentDeviceRepository.GetStudentDevicesInHall(hallId);
+                foreach (var device in studentDevices)
+                {
+                    await _studentDeviceRepository.DeleteStudentDeviceAsync(device.StudentDeviceId);
+                }
+
+                var students = await _studentRepository.GetStudentsInHall(hallId);
+                foreach (var student in students)
+                {
+                    await _studentRepository.DeleteStudentAsync(student.StudentId);
+                }
+
+                var complaints = await _complaintFormRepository.GetComplaintFormsInHall(hallId);
+                foreach (var complaint in complaints)
+                {
+                    await _complaintFormRepository.DeleteComplaintForm(complaint.ComplaintFormId);
+                }
+
+                var porters = await _porterRepository.GetPortersInHall(hallId);
+                foreach (var porter in porters)
+                {
+                    await _porterRepository.DeletePorterAsync(porter.PorterId);
+                }
+
+                var rooms = await _roomRepository.GetRoomsInHall(hallId);
+                foreach (var room in rooms)
+                {
+                    await _roomRepository.DeleteRoomAsync(room.RoomId);
+                }
+
+                var blocks = await _blockRepository.GetBlocksInHall(hallId);
+                foreach (var block in blocks)
+                {
+                    await _blockRepository.DeleteBlockAsync(block.BlockId);
+                }
+
                 var hall = await _hallRepository.DeleteHallAsync(hallId);
-                return Ok(_mapper.Map<Hall>(hall));
+                return Ok("You have deleted this hall");
             }
 
             return NotFound();

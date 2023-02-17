@@ -19,16 +19,18 @@ namespace HallManagementTest2.Controllers
         private readonly IHallRepository _hallRepository;
         private readonly IHallTypeRepository _hallTypeRepository;
         private readonly IBlockRepository _blockRepository;
+        private readonly IStudentRepository _studentRepository;
 
         public RoomController(IRoomRepository roomRepository, IMapper mapper,
                             IHallRepository hallRepository, IHallTypeRepository hallTypeRepository,
-                            IBlockRepository blockRepository)
+                            IBlockRepository blockRepository, IStudentRepository studentRepository)
         {
             _roomRepository = roomRepository;
             _mapper = mapper;
             _hallRepository = hallRepository;
             _hallTypeRepository = hallTypeRepository;
             _blockRepository = blockRepository;
+            _studentRepository = studentRepository;
         }
         
 
@@ -92,7 +94,38 @@ namespace HallManagementTest2.Controllers
         {
             if (await _roomRepository.Exists(roomId))
             {
+                var selectedRoom = await _roomRepository.GetRoomAsync(roomId);
+                var block = await _blockRepository.GetBlockAsync(selectedRoom.BlockId);
+                var hall = await _hallRepository.GetHallAsync(selectedRoom.HallId);
+
+                var students = await _studentRepository.GetStudentsAsync();
+                foreach (var student in students)
+                {
+                    if (student.RoomId == roomId)
+                    {
+                        student.RoomId = null;
+                        selectedRoom.StudentCount -= 1;
+                        block.StudentCount -= 1;
+                        hall.StudentCount -= 1;
+
+                        await _hallRepository.UpdateStudentCount(hall.HallId, hall);
+                        await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
+                        await _studentRepository.JoinRoom(student.RoomId, student.StudentId);
+                    }
+                }
+
+                block.RoomCount -= 1;
+                hall.RoomCount -= 1;
+
+                if (!selectedRoom.IsFull)
+                {
+                    block.AvailableRooms -= 1;
+                    hall.AvailableRooms -= 1;
+                }                
+
                 var room = await _roomRepository.DeleteRoomAsync(roomId);
+                await _hallRepository.UpdateRoomCount(hall.HallId, hall);
+                await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
                 return Ok(_mapper.Map<Room>(room));
             }
 

@@ -2,6 +2,7 @@
 using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace HallManagementTest2.Repositories.Implementations
 {
@@ -47,7 +48,27 @@ namespace HallManagementTest2.Repositories.Implementations
         public async Task<StudentDevice> GetStudentDeviceAsync(Guid studentDeviceId)
         {
             return await _context.StudentDevices.Include(s => s.Student).FirstOrDefaultAsync(x => x.StudentDeviceId == studentDeviceId);
-        }        
+        }
+
+        public async Task<List<StudentDevice>> GetStudentDevices()
+        {
+            var devices = _context.StudentDevices.ToListAsync();
+            return await devices;
+        }
+
+        public async Task<List<StudentDevice>> GetStudentDevicesInHall(Guid hallId)
+        {
+            var devices = await GetStudentDevices();
+            var devicesInHall = new List<StudentDevice>();
+            foreach (var device in devices)
+            {
+                if (device.HallId == hallId)
+                {
+                    devicesInHall.Add(device);
+                }
+            }
+            return devicesInHall;
+        }
 
         public async Task<List<StudentDevice>> GetStudentsByMatricNo(Guid hallId, string matricNo)
         {

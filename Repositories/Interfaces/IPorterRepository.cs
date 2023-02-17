@@ -5,6 +5,7 @@ namespace HallManagementTest2.Repositories.Interfaces
     public interface IPorterRepository
     {
         Task<List<Porter>> GetPorters();
+        Task<List<Porter>> GetPortersInHall(Guid hallId);
         Task<Porter> GetPorter(Guid porterId);
         Task<Porter> GetPorterByUserName(string userName);
         Task<Porter> GetPorterByHall(Guid hallId);

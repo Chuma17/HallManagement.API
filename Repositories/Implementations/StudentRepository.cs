@@ -72,6 +72,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return students;
         }
 
+        public async Task<List<Student>> GetStudentsInHall(Guid hallId)
+        {
+            var students = await GetStudentsAsync();
+            var studentsInHall = new List<Student>();
+            foreach (var student in students)
+            {
+                if (student.HallId == hallId)
+                {
+                    studentsInHall.Add(student);
+                }
+            }
+            return studentsInHall;
+        }
+
         public async Task<Student> JoinBlock(Guid? blockId, Guid studentId)
         {
             var existingStudent = await GetStudentAsync(studentId);
@@ -103,7 +117,7 @@ namespace HallManagementTest2.Repositories.Implementations
             var existingStudent = await GetStudentAsync(studentId);
             if (existingStudent != null)
             {
-                existingStudent.RoomId = roomId;
+                existingStudent.RoomId = roomId;                
 
                 await _context.SaveChangesAsync();
                 return existingStudent;

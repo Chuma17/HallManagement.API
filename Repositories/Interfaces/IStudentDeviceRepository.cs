@@ -9,6 +9,8 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<StudentDevice> UpdateStudentDevice(Guid studentDeviceId, StudentDevice request);
         Task<StudentDevice> DeleteStudentDeviceAsync(Guid studentDeviceId);
         Task<StudentDevice> GetStudentDeviceAsync(Guid studentDeviceId);
+        Task<List<StudentDevice>> GetStudentDevices();
+        Task<List<StudentDevice>> GetStudentDevicesInHall(Guid hallId);
         Task<List<StudentDevice>> GetStudentsByMatricNo(Guid hallId, string matricNo);
 
     }

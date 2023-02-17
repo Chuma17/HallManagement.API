@@ -5,6 +5,7 @@ namespace HallManagementTest2.Repositories.Interfaces
     public interface IStudentRepository
     {
         Task<List<Student>> GetStudentsAsync();
+        Task<List<Student>> GetStudentsInHall(Guid hallId);
         Task<Student> GetStudentAsync(Guid studentId);
         Task<Student> GetStudentDevicesAsync(Guid studentId);
         Task<Student> GetStudentByUserName(string userName);

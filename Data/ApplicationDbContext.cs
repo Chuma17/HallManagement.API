@@ -67,6 +67,6 @@ namespace HallManagementTest2.Data
         public DbSet<StudentDevice> StudentDevices { get; set; }
         public DbSet<HallType> HallTypes { get; set; }
         public DbSet<ComplaintForm> ComplaintForms { get; set; }
-
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

@@ -8,10 +8,12 @@ namespace HallManagementTest2.Repositories.Implementations
     public class RoomRepository : IRoomRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IStudentRepository _studentRepository;
 
-        public RoomRepository(ApplicationDbContext context)
+        public RoomRepository(ApplicationDbContext context, IStudentRepository studentRepository)
         {
             _context = context;
+            _studentRepository = studentRepository;
         }
         public async Task<Room> AddRoomAsync(Room request)
         {
@@ -44,6 +46,40 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Rooms.Include(s => s.Students).FirstOrDefaultAsync(x => x.RoomId == roomId);
         }
 
+        public async Task<List<Room>> GetRoomsAsync()
+        {
+            var rooms = _context.Rooms.ToListAsync();
+            return await rooms;
+        }
+
+        public async Task<List<Room>> GetRoomsInBlockAsync(Guid blockId)
+        {
+            var rooms = await GetRoomsAsync();
+            var roomsInBlock = new List<Room>();
+            foreach (var room in rooms)
+            {
+                if (room.BlockId == blockId)
+                {
+                    roomsInBlock.Add(room);
+                }
+            }
+            return roomsInBlock;
+        }
+
+        public async Task<List<Room>> GetRoomsInHall(Guid hallId)
+        {
+            var rooms = await GetRoomsAsync();
+            var roomsInHall = new List<Room>();
+            foreach (var room in rooms)
+            {
+                if (room.HallId == hallId)
+                {
+                    roomsInHall.Add(room);
+                }
+            }
+            return roomsInHall;
+        }
+
         public async Task<Room> UpdateAvailableSpace(Guid? roomId, Room request)
         {
             var existingRoom = await GetRoomAsync(roomId);
@@ -51,6 +87,7 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 existingRoom.AvailableSpace = request.AvailableSpace;
                 existingRoom.IsFull = request.IsFull;
+                existingRoom.StudentCount = request.StudentCount;
 
                 await _context.SaveChangesAsync();
                 return existingRoom;

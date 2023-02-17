@@ -12,11 +12,11 @@ namespace HallManagementTest2.Controllers
     [ApiController]
     public class ComplaintFormController : Controller
     {
-        private readonly IComplaintForm _complaintForm;
+        private readonly IComplaintFormRepository _complaintForm;
         private readonly IHallRepository _hallRepository;
         private readonly IMapper _mapper;
 
-        public ComplaintFormController(IComplaintForm complaintForm, IHallRepository hallRepository,
+        public ComplaintFormController(IComplaintFormRepository complaintForm, IHallRepository hallRepository,
                                         IMapper mapper)
         {
             _complaintForm = complaintForm;

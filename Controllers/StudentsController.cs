@@ -69,12 +69,23 @@ namespace HallManagementTest2.Controllers
 
             object studentDetails = new
             {
-                student.StudentId, student.UserName, student.FirstName,
-                student.LastName, student.DateOfBirth, student.Gender,
-                student.ProfileImageUrl, student.Mobile, student.StudyLevel,
-                student.Address, student.Course, student.Department,
-                student.School, student.State, student.HallId,
-                student.RoomId, student.Role,
+                student.StudentId,
+                student.UserName,
+                student.FirstName,
+                student.LastName,
+                student.DateOfBirth,
+                student.Gender,
+                student.ProfileImageUrl,
+                student.Mobile,
+                student.StudyLevel,
+                student.Address,
+                student.Course,
+                student.Department,
+                student.School,
+                student.State,
+                student.HallId,
+                student.RoomId,
+                student.Role,
             };
 
             return Ok(studentDetails);
@@ -116,11 +127,23 @@ namespace HallManagementTest2.Controllers
 
             object studentDetails = new
             {
-                student.StudentId, student.UserName, student.Gender, student.FirstName,
-                student.LastName, student.DateOfBirth, student.Mobile, student.StudyLevel,
-                student.Address, student.Course, student.Department, student.School,
-                student.State, student.HallId, student.RoomId, student.Role,
-                student.AccessToken, student.ProfileImageUrl
+                student.StudentId, student.UserName,
+                student.Gender,
+                student.FirstName,
+                student.LastName,
+                student.DateOfBirth,
+                student.Mobile,
+                student.StudyLevel,
+                student.Address,
+                student.Course,
+                student.Department,
+                student.School,
+                student.State,
+                student.HallId,
+                student.RoomId,
+                student.Role,
+                student.AccessToken,
+                student.ProfileImageUrl
             };
 
             return Ok(new { studentDetails });
@@ -156,10 +179,18 @@ namespace HallManagementTest2.Controllers
 
                     object updatedStudentDetails = new
                     {
-                        UpdatedStudent.UserName, UpdatedStudent.Gender, UpdatedStudent.FirstName,
-                        UpdatedStudent.LastName, UpdatedStudent.DateOfBirth, UpdatedStudent.Mobile,
-                        UpdatedStudent.StudyLevel, UpdatedStudent.Address, UpdatedStudent.Course,
-                        UpdatedStudent.Department, UpdatedStudent.School, UpdatedStudent.State,
+                        UpdatedStudent.UserName,
+                        UpdatedStudent.Gender,
+                        UpdatedStudent.FirstName,
+                        UpdatedStudent.LastName,
+                        UpdatedStudent.DateOfBirth,
+                        UpdatedStudent.Mobile,
+                        UpdatedStudent.StudyLevel,
+                        UpdatedStudent.Address,
+                        UpdatedStudent.Course,
+                        UpdatedStudent.Department,
+                        UpdatedStudent.School,
+                        UpdatedStudent.State,
                         UpdatedStudent.Role
                     };
 
@@ -216,7 +247,7 @@ namespace HallManagementTest2.Controllers
             if (!student)
             {
                 return NotFound();
-            }            
+            }
 
             var existingStudent = await _studentRepository.GetStudentAsync(studentId);
             var roomId = existingStudent.RoomId;
@@ -245,7 +276,7 @@ namespace HallManagementTest2.Controllers
                 return Ok("You have left the hall");
             }
 
-            return BadRequest("You are not registered in any hall");            
+            return BadRequest("You are not registered in any hall");
         }
 
 
@@ -281,7 +312,7 @@ namespace HallManagementTest2.Controllers
             if (existingStudent.BlockId != null)
             {
                 return BadRequest("You are already registered in another block");
-            }            
+            }
 
             var block = await _blockRepository.GetBlockAsync(blockId);
 
@@ -290,7 +321,10 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("Block is full");
             }
 
+            block.StudentCount += 1;
+
             await _studentRepository.JoinBlock(blockId, studentId);
+            await _blockRepository.UpdateBlockRoomCount(blockId, block);
             return Ok("You have successfully Joined the block");
         }
 
@@ -316,13 +350,17 @@ namespace HallManagementTest2.Controllers
 
             if (blockId != null)
             {
+                var block = await _blockRepository.GetBlockAsync(blockId);
+                block.StudentCount -= 1;
                 blockId = null;
 
                 await _studentRepository.JoinBlock(blockId, studentId);
+                await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
+
                 return Ok("You have left the block");
             }
 
-            return BadRequest("You are not registered in any block");            
+            return BadRequest("You are not registered in any block");
         }
 
 
@@ -375,16 +413,17 @@ namespace HallManagementTest2.Controllers
             var block = await _blockRepository.GetBlockAsync(room.BlockId);
 
             if (room.AvailableSpace == 0)
-            {                
+            {
                 return BadRequest("Room is full");
             }
 
             room.AvailableSpace -= 1;
-            
+            room.StudentCount += 1;
+
             await _studentRepository.JoinRoom(roomId, studentId);
             await _roomRepository.UpdateAvailableSpace(roomId, room);
 
-            if (room.AvailableSpace == 0)
+            if (room.AvailableSpace == 0 && room.StudentCount == room.MaxOccupants)
             {
                 room.IsFull = true;
 
@@ -421,11 +460,11 @@ namespace HallManagementTest2.Controllers
             }
 
             var blockId = existingStudent.BlockId;
-            var hallId = existingStudent.HallId;           
+            var hallId = existingStudent.HallId;
 
             if (roomId != null)
             {
-                
+
                 var room = await _roomRepository.GetRoomAsync(roomId);
                 var block = await _blockRepository.GetBlockAsync(blockId);
                 var hall = await _hallRepository.GetHallAsync(hallId);
@@ -434,6 +473,7 @@ namespace HallManagementTest2.Controllers
                 if (room.IsFull)
                 {
                     room.AvailableSpace += 1;
+                    room.StudentCount -= 1;
                     room.IsFull = false;
                     hall.AvailableRooms += 1;
                     block.AvailableRooms += 1;
@@ -449,6 +489,7 @@ namespace HallManagementTest2.Controllers
                 else
                 {
                     room.AvailableSpace += 1;
+                    room.StudentCount -= 1;
 
                     await _studentRepository.JoinRoom(roomId, studentId);
                     await _roomRepository.UpdateAvailableSpace(roomId, room);
@@ -458,7 +499,7 @@ namespace HallManagementTest2.Controllers
             }
 
             return BadRequest("You are not registered in any room");
-            
+
         }
 
 
@@ -480,11 +521,24 @@ namespace HallManagementTest2.Controllers
 
             object studentDetails = new
             {
-                student.StudentId, student.UserName, student.Gender, student.FirstName,
-                student.LastName, student.DateOfBirth, student.Mobile, student.StudyLevel,
-                student.Address, student.Course, student.Department, student.School,
-                student.State, student.HallId, student.RoomId, student.Role,
-                student.AccessToken, student.ProfileImageUrl
+                student.StudentId,
+                student.UserName,
+                student.Gender,
+                student.FirstName,
+                student.LastName,
+                student.DateOfBirth,
+                student.Mobile,
+                student.StudyLevel,
+                student.Address,
+                student.Course,
+                student.Department,
+                student.School,
+                student.State,
+                student.HallId,
+                student.RoomId,
+                student.Role,
+                student.AccessToken,
+                student.ProfileImageUrl
             };
 
             return Ok(studentDetails);

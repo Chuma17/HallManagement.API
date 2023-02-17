@@ -8,7 +8,9 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<bool> Exists(Guid? blockId);
         Task<Block> UpdateBlock(Guid blockId, Block request);
         Task<Block> UpdateBlockRoomCount(Guid blockId, Block request);
-        Task<Block> DeleteBlockAsync(Guid blockId);
         Task<Block> GetBlockAsync(Guid? blockId);
+        Task<Block> DeleteBlockAsync(Guid blockId);
+        Task<List<Block>> GetBlocksAsync();
+        Task<List<Block>> GetBlocksInHall(Guid hallId);
     }
 }
