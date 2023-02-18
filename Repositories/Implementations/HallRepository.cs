@@ -74,6 +74,11 @@ namespace HallManagementTest2.Repositories.Implementations
             return await hall;
         }
 
+        public async Task<Hall> GetNotificationInHallAsync(Guid hallId)
+        {
+            return await _context.Halls.Include(s => s.Notifications).FirstOrDefaultAsync(x => x.HallId == hallId);
+        }
+
         public async Task<Hall> GetPortersInHallAsync(Guid hallId)
         {
             return await _context.Halls.Include(s => s.Porters).FirstOrDefaultAsync(x => x.HallId == hallId);
@@ -147,6 +152,6 @@ namespace HallManagementTest2.Repositories.Implementations
                 return existingHall;
             }
             return null;
-        }
+        }        
     }
 }

@@ -8,6 +8,6 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Notification> CreateNotification(Notification request);
         Task<Notification> DeleteNotification(Guid notificationId);
         Task<Notification> GetNotification(Guid notificationId);
-        Task<Notification> GetNotificationInHall(Guid hallId);
+        Task<List<Notification>> GetNotificationInHall(Guid hallId);
     }
 }

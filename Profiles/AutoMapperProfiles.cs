@@ -42,6 +42,9 @@ namespace HallManagementTest2.Profiles
             CreateMap<AddBlockRequest, Block>()
                 .AfterMap<AddBlockRequestAfterMap>();
 
+            CreateMap<AddNotificationRequest, Notification>()
+                .AfterMap<AddNotificationRequesAfterMap>();
+
 
             CreateMap<UpdateStudentRequest, Student>();
 

@@ -20,6 +20,7 @@ namespace HallManagementTest2.Models
         public virtual ICollection<Room>? Rooms { get; set; }
         public virtual ICollection<Porter>? Porters { get; set; }
         public virtual ICollection<Student>? Students { get; set; }
+        public virtual ICollection<Notification>? Notifications { get; set; }
         public virtual ICollection<ComplaintForm>? ComplaintForms { get; set; }
         public virtual ICollection<StudentDevice>? StudentDevices { get; set; }
     }

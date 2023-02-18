@@ -1,33 +1,62 @@
-﻿using HallManagementTest2.Models;
+﻿using HallManagementTest2.Data;
+using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace HallManagementTest2.Repositories.Implementations
 {
     public class NotificationRepository : INotificationRepository
     {
-        public Task<Notification> CreateNotification(Notification request)
+        private readonly ApplicationDbContext _context;
+
+        public NotificationRepository(ApplicationDbContext context)
         {
-            throw new NotImplementedException();
+            _context = context;
+        }
+        public async Task<Notification> CreateNotification(Notification request)
+        {
+            var notification = await _context.Notifications.AddAsync(request);
+            await _context.SaveChangesAsync();
+            return notification.Entity;
         }
 
-        public Task<Notification> DeleteNotification(Guid notificationId)
+        public async Task<Notification> DeleteNotification(Guid notificationId)
         {
-            throw new NotImplementedException();
+            var notification = await GetNotification(notificationId);
+
+            if (notification != null)
+            {
+                _context.Notifications.Remove(notification);
+                await _context.SaveChangesAsync();
+                return notification;
+            }
+
+            return null;
         }
 
-        public Task<List<Notification>> GetAllNotifications()
+        public async Task<List<Notification>> GetAllNotifications()
         {
-            throw new NotImplementedException();
+            var notifications = _context.Notifications.ToListAsync();
+            return await notifications;
         }
 
-        public Task<Notification> GetNotification(Guid notificationId)
+        public async Task<Notification> GetNotification(Guid notificationId)
         {
-            throw new NotImplementedException();
+            return await _context.Notifications.FirstOrDefaultAsync(x => x.NotiFicationId == notificationId);
         }
 
-        public Task<Notification> GetNotificationInHall(Guid hallId)
+        public async Task<List<Notification>> GetNotificationInHall(Guid hallId)
         {
-            throw new NotImplementedException();
+            var notifications = await GetAllNotifications();
+            var notificationsInHall = new List<Notification>();
+            foreach (var notification in notifications)
+            {
+                if (notification.HallId == hallId)
+                {
+                    notificationsInHall.Add(notification);
+                }
+            }
+            return notificationsInHall;
         }
     }
 }

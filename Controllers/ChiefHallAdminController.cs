@@ -142,14 +142,10 @@ namespace HallManagementTest2.Controllers
 
                     object updatedchiefHallAdminDetails = new
                     {
-                        UpdatedChiefHallAdmin.UserName,
-                        UpdatedChiefHallAdmin.Gender,
-                        UpdatedChiefHallAdmin.FirstName,
-                        UpdatedChiefHallAdmin.LastName,
-                        UpdatedChiefHallAdmin.DateOfBirth,
-                        UpdatedChiefHallAdmin.Mobile,
-                        UpdatedChiefHallAdmin.Address,
-                        UpdatedChiefHallAdmin.State,
+                        UpdatedChiefHallAdmin.UserName, UpdatedChiefHallAdmin.Gender,
+                        UpdatedChiefHallAdmin.FirstName, UpdatedChiefHallAdmin.LastName,
+                        UpdatedChiefHallAdmin.DateOfBirth, UpdatedChiefHallAdmin.Mobile,
+                        UpdatedChiefHallAdmin.Address, UpdatedChiefHallAdmin.State,
                         UpdatedChiefHallAdmin.Role,
                     };
 
@@ -178,18 +174,10 @@ namespace HallManagementTest2.Controllers
 
             object chiefHallAdminDetails = new
             {
-                chiefHallAdmin.ChiefHallAdminId,
-                chiefHallAdmin.UserName,
-                chiefHallAdmin.Gender,
-                chiefHallAdmin.FirstName,
-                chiefHallAdmin.LastName,
-                chiefHallAdmin.DateOfBirth,
-                chiefHallAdmin.Mobile,
-                chiefHallAdmin.Address,
-                chiefHallAdmin.State,
-                chiefHallAdmin.Role,
-                chiefHallAdmin.AccessToken,
-                chiefHallAdmin.ProfileImageUrl
+                chiefHallAdmin.ChiefHallAdminId, chiefHallAdmin.UserName, chiefHallAdmin.Gender,
+                chiefHallAdmin.FirstName, chiefHallAdmin.LastName, chiefHallAdmin.DateOfBirth,
+                chiefHallAdmin.Mobile, chiefHallAdmin.Address, chiefHallAdmin.State,
+                chiefHallAdmin.Role, chiefHallAdmin.AccessToken, chiefHallAdmin.ProfileImageUrl
             };
 
             return Ok(chiefHallAdminDetails);

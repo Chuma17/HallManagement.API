@@ -23,12 +23,14 @@ namespace HallManagementTest2.Controllers
         private readonly IPorterRepository _porterRepository;
         private readonly IBlockRepository _blockRepository;
         private readonly IComplaintFormRepository _complaintFormRepository;
+        private readonly INotificationRepository _notificationRepository;
 
         public HallController(IHallRepository hallRepository, IMapper mapper,
                                 IHallAdminRepository hallAdminRepository, IHallTypeRepository hallTypeRepository,
                                 IStudentDeviceRepository studentDeviceRepository, IStudentRepository studentRepository,
                                 IRoomRepository roomRepository, IPorterRepository porterRepository,
-                                IBlockRepository blockRepository, IComplaintFormRepository complaintFormRepository)
+                                IBlockRepository blockRepository, IComplaintFormRepository complaintFormRepository,
+                                INotificationRepository notificationRepository)
         {
             _hallRepository = hallRepository;
             _mapper = mapper;
@@ -40,6 +42,7 @@ namespace HallManagementTest2.Controllers
             _porterRepository = porterRepository;
             _blockRepository = blockRepository;
             _complaintFormRepository = complaintFormRepository;
+            _notificationRepository = notificationRepository;
         }
 
         //Retrieving all halls
@@ -220,6 +223,22 @@ namespace HallManagementTest2.Controllers
             return Ok(complaints);
         }
 
+        //Retrieving notifications in a single hall
+        [HttpGet("get-notifications-in-hall/{hallId:guid}")]
+        public async Task<IActionResult> GetNotificationsInHallAsync([FromRoute] Guid hallId)
+        {
+            var notificationsInHall = await _hallRepository.GetNotificationInHallAsync(hallId);
+
+            if (notificationsInHall == null)
+            {
+                return NotFound();
+            }
+
+            var notifications = notificationsInHall.Notifications;
+
+            return Ok(notifications);
+        }
+
         //Add hall
         [HttpPost("add-hall"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<ActionResult<Hall>> AddHall([FromBody] AddHallRequest request)
@@ -266,6 +285,12 @@ namespace HallManagementTest2.Controllers
                 foreach (var complaint in complaints)
                 {
                     await _complaintFormRepository.DeleteComplaintForm(complaint.ComplaintFormId);
+                }
+
+                var notifications = await _notificationRepository.GetNotificationInHall(hallId);
+                foreach (var notification in notifications)
+                {
+                    await _notificationRepository.DeleteNotification(notification.NotiFicationId);
                 }
 
                 var porters = await _porterRepository.GetPortersInHall(hallId);
