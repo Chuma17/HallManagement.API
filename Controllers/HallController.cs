@@ -259,6 +259,22 @@ namespace HallManagementTest2.Controllers
             return Ok(notifications);
         }
 
+        //Retrieving exit passes in a single hall
+        [HttpGet("get-exitPasses-in-hall/{hallId:guid}")]
+        public async Task<IActionResult> GetExitPassesInHallAsync([FromRoute] Guid hallId)
+        {
+            var exitPassesInHall = await _hallRepository.GetExitPassesInHallAsync(hallId);
+
+            if (exitPassesInHall == null)
+            {
+                return NotFound();
+            }
+
+            var notifications = exitPassesInHall.ExitPasses;
+
+            return Ok(notifications);
+        }
+
         //Add hall
         [HttpPost("add-hall"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<ActionResult<Hall>> AddHall([FromBody] AddHallRequest request)

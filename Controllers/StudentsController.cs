@@ -210,7 +210,9 @@ namespace HallManagementTest2.Controllers
                     await _studentDeviceRepository.DeleteStudentDeviceAsync(device.StudentDeviceId);
                 }
 
-                var exitPasses = await _exitPassRepository.GetExitPassesForStudent(currentUserIdGuid);
+                var student = await _studentRepository.GetStudentAsync(currentUserIdGuid);
+                var hall = await _hallRepository.GetHallAsync(student.HallId);
+                var exitPasses = await _exitPassRepository.GetExitPassesForStudent(student.MatricNo, hall.HallId);
                 foreach (var exitPass in exitPasses)
                 {
                     await _exitPassRepository.DeleteExitPass(exitPass.ExitPassId);
@@ -615,7 +617,7 @@ namespace HallManagementTest2.Controllers
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, student.PasswordHash, student.PasswordSalt))
                 return BadRequest(new { message = "UserName or password is incorrect" });
-
+           
             string token = _authService.CreateStudentToken(student);
             student.AccessToken = token;
 
@@ -626,15 +628,17 @@ namespace HallManagementTest2.Controllers
 
             object studentDetails = new
             {
-                student.StudentId, 
-                student.UserName, 
-                student.Gender, 
-                student.FirstName, 
-                student.LastName,              
+                student.StudentId,
+                student.UserName,
+                student.Gender,
+                student.FirstName,
+                student.LastName,
                 student.StudyLevel,
                 student.Course,
                 student.Department,
                 student.Role,
+                student.Email,
+                student.DateOfBirth,
                 student.AccessToken, 
                 student.RefreshToken, 
                 student.ProfileImageUrl

@@ -23,5 +23,6 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Hall> GetStudentDevicesInHallAsync(Guid hallId);
         Task<Hall> GetComplaintFormsInHallAsync(Guid hallId);
         Task<Hall> GetNotificationInHallAsync(Guid hallId);
+        Task<Hall> GetExitPassesInHallAsync(Guid hallId);
     }
 }

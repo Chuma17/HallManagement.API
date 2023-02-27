@@ -50,6 +50,11 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Halls.Include(s => s.ComplaintForms).FirstOrDefaultAsync(x => x.HallId == hallId);
         }
 
+        public async Task<Hall> GetExitPassesInHallAsync(Guid hallId)
+        {
+            return await _context.Halls.Include(s => s.ExitPasses).FirstOrDefaultAsync(x => x.HallId == hallId);
+        }
+
         public async Task<Hall> GetHallAsync(Guid? hallId)
         {
             return await _context.Halls.FirstOrDefaultAsync(x => x.HallId == hallId);

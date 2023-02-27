@@ -14,5 +14,6 @@ namespace HallManagementTest2.Models
         public string? ReasonForLeaving { get; set; }
         public string? StateOfArrival { get; set; }
         public string? Address { get; set; }
+        public bool HasReturned { get; set; } = false;
     }
 }
