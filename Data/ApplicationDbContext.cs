@@ -10,6 +10,10 @@ namespace HallManagementTest2.Data
 
         }
 
+        public ApplicationDbContext()
+        {
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -68,5 +72,6 @@ namespace HallManagementTest2.Data
         public DbSet<HallType> HallTypes { get; set; }
         public DbSet<ComplaintForm> ComplaintForms { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ExitPass> ExitPasses { get; set; }
     }
 }

@@ -7,6 +7,9 @@ using HallManagementTest2.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HallManagementTest2.Requests;
+using System.Security.Claims;
+using HallManagementTest2.Repositories.Implementations;
+using System.Security.Cryptography;
 
 namespace HallManagementTest2.Controllers
 {
@@ -20,12 +23,15 @@ namespace HallManagementTest2.Controllers
         private readonly AuthService _authService;
         private readonly IRoomRepository _roomRepository;
         private readonly IBlockRepository _blockRepository;
+        private readonly IStudentDeviceRepository _studentDeviceRepository;
+        private readonly IExitPassRepository _exitPassRepository;
         private readonly IHallRepository _hallRepository;
 
         public StudentsController(IStudentRepository studentRepository, IMapper mapper,
                                  IRoleService roleService, IHallRepository hallRepository,
                                  AuthService authService, IRoomRepository roomRepository,
-                                 IBlockRepository blockRepository)
+                                 IBlockRepository blockRepository, IStudentDeviceRepository studentDeviceRepository,
+                                    IExitPassRepository exitPassRepository)
         {
             _studentRepository = studentRepository;
             _mapper = mapper;
@@ -33,6 +39,8 @@ namespace HallManagementTest2.Controllers
             _authService = authService;
             _roomRepository = roomRepository;
             _blockRepository = blockRepository;
+            _studentDeviceRepository = studentDeviceRepository;
+            _exitPassRepository = exitPassRepository;
             _hallRepository = hallRepository;
         }
 
@@ -51,41 +59,66 @@ namespace HallManagementTest2.Controllers
         public async Task<IActionResult> GetAllStudents()
         {
             var students = await _studentRepository.GetStudentsAsync();
+            List<object> editedStudents = new List<object>();
+            foreach (var student in students)
+            {
+                var editedStudent = new
+                {
+                    student.StudentId,
+                    student.FirstName,
+                    student.LastName,
+                    student.Gender,
+                    student.StudyLevel,
+                    student.Course,
+                    student.Department,
+                    student.School,
+                    student.HallId,
+                    student.RoomId,
+                    student.Role
+                };
+                editedStudents.Add(editedStudent);
+            }
 
-            return Ok(students);
+            return Ok(editedStudents);
         }
 
 
         //Retrieving a single student
         [HttpGet("get-single-student/{studentId:guid}")]
         public async Task<IActionResult> GetStudentAsync([FromRoute] Guid studentId)
-        {
+        {            
             var student = await _studentRepository.GetStudentAsync(studentId);
-
             if (student == null)
             {
                 return NotFound();
             }
 
+            var block = await _blockRepository.GetBlockAsync(student.BlockId);
+            var hall = await _hallRepository.GetHallAsync(student.HallId);
+            var room = await _roomRepository.GetRoomAsync(student.RoomId);
+
             object studentDetails = new
             {
                 student.StudentId,
                 student.UserName,
-                student.FirstName,
+                student.FirstName, 
                 student.LastName,
+                student.Email,
+                student.MatricNo,
+                HallName = hall?.HallName ?? "empty",
+                BlockName = block?.BlockName ?? "empty",
+                RoomNumber = room?.RoomNumber ?? "empty",
                 student.DateOfBirth,
-                student.Gender,
+                student.Gender, 
                 student.ProfileImageUrl,
                 student.Mobile,
                 student.StudyLevel,
                 student.Address,
                 student.Course,
                 student.Department,
-                student.School,
-                student.State,
-                student.HallId,
-                student.RoomId,
-                student.Role,
+                student.School, 
+                student.State,               
+                student.Role              
             };
 
             return Ok(studentDetails);
@@ -93,17 +126,25 @@ namespace HallManagementTest2.Controllers
 
 
         //Retrieving a single student devices
-        [HttpPost("get-studentDevices")]
-        public async Task<IActionResult> GetStudentAsync([FromBody] string userName)
+        [HttpPost("get-studentDevices"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetStudentDevicesAsync()
         {
-            var student = await _studentRepository.GetStudentByUserName(userName);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.GetStudentDevicesAsync(currentUserIdGuid);
 
             if (student == null)
             {
                 return NotFound();
             }
 
-            return Ok(student);
+            var studentDevices = student.StudentDevices;
+
+            return Ok(studentDevices);
         }
 
 
@@ -127,8 +168,9 @@ namespace HallManagementTest2.Controllers
 
             object studentDetails = new
             {
-                student.StudentId, student.UserName,
-                student.Gender,
+                student.StudentId,
+                student.UserName,
+                student.Gender, 
                 student.FirstName,
                 student.LastName,
                 student.DateOfBirth,
@@ -138,7 +180,7 @@ namespace HallManagementTest2.Controllers
                 student.Course,
                 student.Department,
                 student.School,
-                student.State,
+                student.State, 
                 student.HallId,
                 student.RoomId,
                 student.Role,
@@ -151,27 +193,51 @@ namespace HallManagementTest2.Controllers
 
 
         //Deleting a student
-        [HttpDelete("delete-student/{studentId:guid}")]
-        public async Task<IActionResult> DeleteStudentAsync([FromRoute] Guid studentId)
+        [HttpDelete("delete-student"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> DeleteStudentAsync()
         {
-            if (await _studentRepository.Exists(studentId))
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
             {
-                var student = await _studentRepository.DeleteStudentAsync(studentId);
-                return Ok(_mapper.Map<Student>(student));
+                return Forbid();
             }
 
+            if (await _studentRepository.Exists(currentUserIdGuid))
+            {
+                var studentDevices = await _studentDeviceRepository.GetStudentDevicesForStudent(currentUserIdGuid);
+                foreach (var device in studentDevices)
+                {
+                    await _studentDeviceRepository.DeleteStudentDeviceAsync(device.StudentDeviceId);
+                }
+
+                var exitPasses = await _exitPassRepository.GetExitPassesForStudent(currentUserIdGuid);
+                foreach (var exitPass in exitPasses)
+                {
+                    await _exitPassRepository.DeleteExitPass(exitPass.ExitPassId);
+                }
+                
+                await _studentRepository.DeleteStudentAsync(currentUserIdGuid);
+                return Ok("This Student account has been deleted");
+            }
+            
             return NotFound();
         }
 
 
         //Updating a student Record
-        [HttpPut("update-student/{studentId:guid}")]
-        public async Task<IActionResult> UpdateStudentAsync([FromRoute] Guid studentId, [FromBody] UpdateStudentRequest request)
+        [HttpPut("update-student"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> UpdateStudentAsync([FromBody] UpdateStudentRequest request)
         {
-            if (await _studentRepository.Exists(studentId))
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            if (await _studentRepository.Exists(currentUserIdGuid))
             {
                 //Update Details
-                var updatedStudent = await _studentRepository.UpdateStudent(studentId, _mapper.Map<Student>(request));
+                var updatedStudent = await _studentRepository.UpdateStudent(currentUserIdGuid, _mapper.Map<Student>(request));
 
                 if (updatedStudent != null)
                 {
@@ -179,18 +245,10 @@ namespace HallManagementTest2.Controllers
 
                     object updatedStudentDetails = new
                     {
-                        UpdatedStudent.UserName,
-                        UpdatedStudent.Gender,
-                        UpdatedStudent.FirstName,
-                        UpdatedStudent.LastName,
-                        UpdatedStudent.DateOfBirth,
-                        UpdatedStudent.Mobile,
-                        UpdatedStudent.StudyLevel,
-                        UpdatedStudent.Address,
-                        UpdatedStudent.Course,
-                        UpdatedStudent.Department,
-                        UpdatedStudent.School,
-                        UpdatedStudent.State,
+                        UpdatedStudent.UserName, UpdatedStudent.Gender, UpdatedStudent.FirstName,
+                        UpdatedStudent.LastName, UpdatedStudent.DateOfBirth, UpdatedStudent.Mobile,
+                        UpdatedStudent.StudyLevel, UpdatedStudent.Address, UpdatedStudent.Course,
+                        UpdatedStudent.Department, UpdatedStudent.School, UpdatedStudent.State,
                         UpdatedStudent.Role
                     };
 
@@ -203,10 +261,16 @@ namespace HallManagementTest2.Controllers
 
 
         //Join Hall
-        [HttpPost("join-hall/{studentId:guid}")]
-        public async Task<IActionResult> JoinHall([FromBody] Guid hallId, [FromRoute] Guid studentId)
+        [HttpPost("join-hall"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> JoinHall([FromBody] Guid hallId)
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
@@ -218,7 +282,12 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("The specified hall is invalid.");
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
+            
+            if (existingStudent.IsBlocked == true)
+            {
+                return BadRequest("You cannot select this hall because you have been blocked! Meet the hall admin.");
+            }
 
             if (existingStudent.HallId == hallId)
             {
@@ -227,29 +296,40 @@ namespace HallManagementTest2.Controllers
 
             if (existingStudent.HallId != null)
             {
-                return BadRequest("You are already registered in another hall");
+                return BadRequest("You are registered in another hall");
             }
 
             var hall = await _hallRepository.GetHallAsync(hallId);
+            if (!hall.IsAssigned)
+            {
+                return BadRequest("This Hall is not available at the moment");
+            }
+
             hall.StudentCount += 1;
 
-            await _studentRepository.JoinHall(hallId, studentId);
+            await _studentRepository.JoinHall(hallId, currentUserIdGuid);
             await _hallRepository.UpdateStudentCount(hallId, hall);
-            return Ok("You have successfully Joined the hall");
+            return Ok("You have successfully Joined this hall");
         }
 
 
         //Leave Hall
-        [HttpPut("leave-hall/{studentId:guid}")]
-        public async Task<IActionResult> LeaveHall([FromRoute] Guid studentId)
+        [HttpPut("leave-hall"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> LeaveHall()
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
             var roomId = existingStudent.RoomId;
             var blockId = existingStudent.BlockId;
             var hallId = existingStudent.HallId;
@@ -271,7 +351,7 @@ namespace HallManagementTest2.Controllers
 
                 hall.StudentCount -= 1;
 
-                await _studentRepository.JoinHall(hallId, studentId);
+                await _studentRepository.JoinHall(hallId, currentUserIdGuid);
                 await _hallRepository.UpdateStudentCount(hallId, hall);
                 return Ok("You have left the hall");
             }
@@ -281,10 +361,16 @@ namespace HallManagementTest2.Controllers
 
 
         //Join Block
-        [HttpPost("join-block/{studentId:guid}")]
-        public async Task<IActionResult> JoinBlock([FromBody] Guid blockId, [FromRoute] Guid studentId)
+        [HttpPost("join-block"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> JoinBlock([FromBody] Guid blockId)
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
@@ -296,7 +382,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("The specified block is invalid.");
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
             var hallId = existingStudent.HallId;
 
             if (hallId == null)
@@ -323,23 +409,29 @@ namespace HallManagementTest2.Controllers
 
             block.StudentCount += 1;
 
-            await _studentRepository.JoinBlock(blockId, studentId);
+            await _studentRepository.JoinBlock(blockId, currentUserIdGuid);
             await _blockRepository.UpdateBlockRoomCount(blockId, block);
             return Ok("You have successfully Joined the block");
         }
 
 
         //Leave Block
-        [HttpPut("leave-block/{studentId:guid}")]
-        public async Task<IActionResult> LeaveBlock([FromRoute] Guid studentId)
+        [HttpPut("leave-block"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> LeaveBlock()
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
             var roomId = existingStudent.RoomId;
             var blockId = existingStudent.BlockId;
 
@@ -354,7 +446,7 @@ namespace HallManagementTest2.Controllers
                 block.StudentCount -= 1;
                 blockId = null;
 
-                await _studentRepository.JoinBlock(blockId, studentId);
+                await _studentRepository.JoinBlock(blockId, currentUserIdGuid);
                 await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
 
                 return Ok("You have left the block");
@@ -365,10 +457,16 @@ namespace HallManagementTest2.Controllers
 
 
         //Join Room
-        [HttpPost("join-room/{studentId:guid}")]
-        public async Task<IActionResult> JoinRoom([FromBody] Guid roomId, [FromRoute] Guid studentId)
+        [HttpPost("join-room"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> JoinRoom([FromBody] Guid roomId)
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
@@ -386,7 +484,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("Room is under maintenance. Please select another room");
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
             var blockId = existingStudent.BlockId;
             var hallId = existingStudent.HallId;
 
@@ -420,7 +518,7 @@ namespace HallManagementTest2.Controllers
             room.AvailableSpace -= 1;
             room.StudentCount += 1;
 
-            await _studentRepository.JoinRoom(roomId, studentId);
+            await _studentRepository.JoinRoom(roomId, currentUserIdGuid);
             await _roomRepository.UpdateAvailableSpace(roomId, room);
 
             if (room.AvailableSpace == 0 && room.StudentCount == room.MaxOccupants)
@@ -441,16 +539,22 @@ namespace HallManagementTest2.Controllers
 
 
         //Leave Room
-        [HttpPut("leave-room/{studentId:guid}")]
-        public async Task<IActionResult> LeaveRoom([FromRoute] Guid studentId)
+        [HttpPut("leave-room"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> LeaveRoom()
         {
-            var student = await _studentRepository.Exists(studentId);
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.Exists(currentUserIdGuid);
             if (!student)
             {
                 return NotFound();
             }
 
-            var existingStudent = await _studentRepository.GetStudentAsync(studentId);
+            var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
 
             var roomId = existingStudent.RoomId;
             var roomExists = await _roomRepository.Exists(roomId);
@@ -478,7 +582,7 @@ namespace HallManagementTest2.Controllers
                     hall.AvailableRooms += 1;
                     block.AvailableRooms += 1;
 
-                    await _studentRepository.JoinRoom(roomId, studentId);
+                    await _studentRepository.JoinRoom(roomId, currentUserIdGuid);
                     await _roomRepository.UpdateAvailableSpace(roomId, room);
                     await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
                     await _hallRepository.UpdateRoomCount(hall.HallId, hall);
@@ -491,7 +595,7 @@ namespace HallManagementTest2.Controllers
                     room.AvailableSpace += 1;
                     room.StudentCount -= 1;
 
-                    await _studentRepository.JoinRoom(roomId, studentId);
+                    await _studentRepository.JoinRoom(roomId, currentUserIdGuid);
                     await _roomRepository.UpdateAvailableSpace(roomId, room);
 
                     return Ok("You have left the room");
@@ -499,15 +603,13 @@ namespace HallManagementTest2.Controllers
             }
 
             return BadRequest("You are not registered in any room");
-
-        }
-
+        }       
 
         //Student login 
         [HttpPost("student-login")]
-        public async Task<ActionResult<Student>> Login([FromBody] LoginRequest loginRequest)
+        public async Task<ActionResult<Student>> Login([FromBody] StudentLoginRequest loginRequest)
         {
-            var student = await _studentRepository.GetStudentByUserName(loginRequest.UserName);
+            var student = await _studentRepository.GetStudentByMatricNo(loginRequest.MatricNo);
             if (student == null)
                 return BadRequest(new { message = "Email or password is incorrect" });
 
@@ -517,31 +619,73 @@ namespace HallManagementTest2.Controllers
             string token = _authService.CreateStudentToken(student);
             student.AccessToken = token;
 
-            await _studentRepository.UpdateStudentAccessToken(student.UserName, student);
+            var refreshToken = _authService.GenerateRefreshToken();
+            _authService.SetStudentRefreshToken(refreshToken, student, HttpContext);
+
+            await _studentRepository.UpdateStudentToken(student.MatricNo, student);
 
             object studentDetails = new
             {
-                student.StudentId,
-                student.UserName,
-                student.Gender,
-                student.FirstName,
-                student.LastName,
-                student.DateOfBirth,
-                student.Mobile,
+                student.StudentId, 
+                student.UserName, 
+                student.Gender, 
+                student.FirstName, 
+                student.LastName,              
                 student.StudyLevel,
-                student.Address,
                 student.Course,
                 student.Department,
-                student.School,
-                student.State,
-                student.HallId,
-                student.RoomId,
                 student.Role,
-                student.AccessToken,
+                student.AccessToken, 
+                student.RefreshToken, 
                 student.ProfileImageUrl
             };
 
             return Ok(studentDetails);
+        }
+
+        [HttpPost("student-refresh-token/{studentId:guid}")]
+        public async Task<ActionResult<string>> RefreshToken([FromRoute] Guid studentId)
+        {            
+            var student = await _studentRepository.GetStudentAsync(studentId);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!student.RefreshToken.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh Token");
+            }
+            else if (student.TokenExpires < DateTime.Now)
+            {
+                return Unauthorized("Token Expired");
+            }
+
+            string token = _authService.CreateStudentToken(student);
+            student.AccessToken = token;
+
+            var newRefreshToken = _authService.GenerateRefreshToken();
+            _authService.SetStudentRefreshToken(newRefreshToken, student, HttpContext);
+
+            await _studentRepository.UpdateStudentToken(student.MatricNo, student);
+
+            return Ok(new { token });
+        }
+
+        [HttpPost("student-logout"), Authorize]
+        public IActionResult Logout()
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return BadRequest(new { message = "User is not authenticated" });
+            }
+
+            Response.Cookies.Delete("refreshToken"); // Remove the refresh token cookie
+
+            return Ok(new { message = "Logout successful" });
         }
     }
 }

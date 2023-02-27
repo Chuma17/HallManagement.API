@@ -14,8 +14,5 @@ namespace HallManagementTest2.Models
         public string? Color { get; set; }
         public string? Description { get; set; }
         public string? SerialNo { get; set; }
-
-        public virtual Student? Student { get; set; }
-        //public virtual Hall? Hall { get; set; }
     }
 }

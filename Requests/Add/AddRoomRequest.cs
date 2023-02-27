@@ -4,6 +4,5 @@
     {
         public Guid HallId { get; set; }
         public Guid BlockId { get; set; }
-        //public string? RoomNumber { get; set; }        
     }
 }

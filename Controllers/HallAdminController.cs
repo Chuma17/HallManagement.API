@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using HallManagementTest2.Repositories.Interfaces;
 using AutoMapper;
+using System.Security.Claims;
+using HallManagementTest2.Repositories.Implementations;
 
 namespace HallManagementTest2.Controllers
 {
@@ -81,10 +83,15 @@ namespace HallManagementTest2.Controllers
         public async Task<IActionResult> GetHallAdminByHallAsync([FromRoute] Guid hallId)
         {
             var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
-
             if (hallAdmin == null)
             {
                 return NotFound();
+            }
+
+            var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
+            if (hall == null)
+            {
+                hall.HallName = "Empty";
             }
 
             object hallAdminDetails = new
@@ -93,6 +100,8 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.UserName,
                 hallAdmin.FirstName,
                 hallAdmin.LastName,
+                hallAdmin.Email,
+                hall.HallName,
                 hallAdmin.DateOfBirth,
                 hallAdmin.Gender,
                 hallAdmin.ProfileImageUrl,
@@ -103,6 +112,20 @@ namespace HallManagementTest2.Controllers
             };
 
             return Ok(hallAdminDetails);
+        }
+
+        [HttpGet("get-HallAdmins-by-gender")]
+        public async Task<IActionResult> GetHallAdminByGenderAsync()
+        {
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
+            var hallAdmins = await _hallAdminRepository.GetHallAdminsByGender(currentUserGender);
+
+            if (hallAdmins == null)
+            {
+                return NotFound();
+            }            
+
+            return Ok(hallAdmins);
         }
 
         //Adding a hall admin
@@ -123,11 +146,14 @@ namespace HallManagementTest2.Controllers
             _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
             var hallAdmin = await _hallAdminRepository.AddHallAdminAsync(_mapper.Map<HallAdmin>(request));
+            var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
+            hall.IsAssigned = true;
 
             hallAdmin.PasswordHash = passwordHash;
             hallAdmin.PasswordSalt = passwordSalt;
 
             await _hallAdminRepository.UpdateHallAdminPasswordHash(hallAdmin.HallAdminId, hallAdmin);
+            await _hallRepository.UpdateHallStatus(hall.HallId, hall);
 
             object hallAdminDetails = new
             {
@@ -154,21 +180,33 @@ namespace HallManagementTest2.Controllers
         {
             if (await _hallAdminRepository.Exists(hallAdminId))
             {
-                var hallAdmin = await _hallAdminRepository.DeleteHallAdminAsync(hallAdminId);
-                return Ok(_mapper.Map<HallAdmin>(hallAdmin));
+                var hallAdmin = await _hallAdminRepository.GetHallAdmin(hallAdminId);
+                var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
+
+                hall.IsAssigned = false;
+
+                await _hallRepository.UpdateHallStatus(hall.HallId, hall);
+                await _hallAdminRepository.DeleteHallAdminAsync(hallAdminId);
+                return Ok("This Hall admin account has been deleted");
             }
 
             return NotFound();
         }
 
         //Updating a hall admin Record
-        [HttpPut("update-HallAdmin/{hallAdminId:guid}"), Authorize(Roles = "HallAdmin")]
-        public async Task<IActionResult> UpdateHallAdminAsync([FromRoute] Guid hallAdminId, [FromBody] UpdateHallAdminRequest request)
+        [HttpPut("update-HallAdmin"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> UpdateHallAdminAsync([FromBody] UpdateHallAdminRequest request)
         {
-            if (await _hallAdminRepository.Exists(hallAdminId))
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            if (await _hallAdminRepository.Exists(currentUserIdGuid))
             {                
                 //Update Details
-                var updatedHallAdmin = await _hallAdminRepository.UpdateHallAdmin(hallAdminId, _mapper.Map<HallAdmin>(request));
+                var updatedHallAdmin = await _hallAdminRepository.UpdateHallAdmin(currentUserIdGuid, _mapper.Map<HallAdmin>(request));
 
                 if (updatedHallAdmin != null)
                 {
@@ -195,7 +233,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //HallAdmin login 
-        [HttpPost("HallAdmin-login"), AllowAnonymous]
+        [HttpPost("HallAdmin-login")]
         public async Task<ActionResult<HallAdmin>> Login([FromBody] LoginRequest loginRequest)
         {
             var hallAdmin = await _hallAdminRepository.GetHallAdminByUserName(loginRequest.UserName);
@@ -208,7 +246,10 @@ namespace HallManagementTest2.Controllers
             string token = _authService.CreateHallAdminToken(hallAdmin);
             hallAdmin.AccessToken = token;
 
-            await _hallAdminRepository.UpdateHallAdminAccessToken(hallAdmin.UserName, hallAdmin);
+            var refreshToken = _authService.GenerateRefreshToken();
+            _authService.SetHallAdminRefreshToken(refreshToken, hallAdmin, HttpContext);
+
+            await _hallAdminRepository.UpdateHallAdminToken(hallAdmin.UserName, hallAdmin);
 
             object hallAdminDetails = new
             {
@@ -223,10 +264,57 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.State,
                 hallAdmin.Role,
                 hallAdmin.AccessToken,
+                hallAdmin.RefreshToken,
                 hallAdmin.ProfileImageUrl
             };
 
             return Ok(hallAdminDetails);
+        }
+
+        //Hall admin refresh token
+        [HttpPost("hallAdmin-refresh-token/{hallAdminId:guid}")]
+        public async Task<ActionResult<string>> RefreshToken([FromRoute] Guid hallAdminId)
+        {
+            var hallAdmin = await _hallAdminRepository.GetHallAdmin(hallAdminId);
+
+            if (hallAdmin == null)
+            {
+                return NotFound();
+            }
+
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!hallAdmin.RefreshToken.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh Token");
+            }
+            else if (hallAdmin.TokenExpires < DateTime.Now)
+            {
+                return Unauthorized("Token Expired");
+            }
+
+            string token = _authService.CreateHallAdminToken(hallAdmin);
+            hallAdmin.AccessToken = token;
+
+            var newRefreshToken = _authService.GenerateRefreshToken();
+            _authService.SetHallAdminRefreshToken(newRefreshToken, hallAdmin, HttpContext);
+
+            await _hallAdminRepository.UpdateHallAdminToken(hallAdmin.UserName, hallAdmin);
+
+            return Ok(new { token });
+        }
+
+        [HttpPost("hallAdmin-logout"), Authorize]
+        public IActionResult Logout()
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return BadRequest(new { message = "User is not authenticated" });
+            }
+
+            Response.Cookies.Delete("refreshToken"); // Remove the refresh token cookie
+
+            return Ok(new { message = "Logout successful" });
         }
     }
 }

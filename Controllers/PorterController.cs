@@ -19,14 +19,17 @@ namespace HallManagementTest2.Controllers
         private readonly IMapper _mapper;
         private readonly IRoleService _roleService;
         private readonly AuthService _authService;
+        private readonly IHallRepository _hallRepository;
 
         public PorterController(IPorterRepository porterRepository, IMapper mapper,
-                                IRoleService roleService, AuthService authService)
+                                IRoleService roleService, AuthService authService,
+                                IHallRepository hallRepository)
         {
             _porterRepository = porterRepository;
             _mapper = mapper;
             _roleService = roleService;
             _authService = authService;
+            _hallRepository = hallRepository;
         }
 
         //Getting the role of the user
@@ -58,12 +61,16 @@ namespace HallManagementTest2.Controllers
                 return NotFound();
             }
 
+            var hall = await _hallRepository.GetHallAsync(porter.HallId);
+
             object porterDetails = new
             {
                 porter.PorterId,
                 porter.UserName,
                 porter.FirstName,
                 porter.LastName,
+                porter.Email,
+                hall.HallName,
                 porter.DateOfBirth,
                 porter.Gender,
                 porter.ProfileImageUrl,
@@ -76,34 +83,7 @@ namespace HallManagementTest2.Controllers
             return Ok(porterDetails);
         }
 
-        [HttpGet("get-Porter-by-hall/{hallId:guid}")]
-        public async Task<IActionResult> GetPorterByHallAsync([FromRoute] Guid hallId)
-        {
-            var porter = await _porterRepository.GetPorterByHall(hallId);
-
-            if (porter == null)
-            {
-                return NotFound();
-            }
-
-            object porterDetails = new
-            {
-                porter.PorterId,
-                porter.UserName,
-                porter.FirstName,
-                porter.LastName,
-                porter.DateOfBirth,
-                porter.Gender,
-                porter.ProfileImageUrl,
-                porter.Mobile,
-                porter.Address,
-                porter.State,
-                porter.Role,
-            };
-
-            return Ok(porterDetails);
-        }
-
+        
         //Adding a porter
         [HttpPost("Porter-registration")]
         public async Task<ActionResult<Porter>> AddPorter([FromBody] AddPorterRequest request)
@@ -188,7 +168,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Porter login 
-        [HttpPost("Porter-login"), AllowAnonymous]
+        [HttpPost("Porter-login")]
         public async Task<ActionResult<Porter>> Login([FromBody] LoginRequest loginRequest)
         {
             var porter = await _porterRepository.GetPorterByUserName(loginRequest.UserName);
@@ -201,7 +181,10 @@ namespace HallManagementTest2.Controllers
             string token = _authService.CreatePorterToken(porter);
             porter.AccessToken = token;
 
-            await _porterRepository.UpdatePorterAccessToken(porter.UserName, porter);
+            var refreshToken = _authService.GenerateRefreshToken();
+            _authService.SetPorterRefreshToken(refreshToken, porter, HttpContext);
+
+            await _porterRepository.UpdatePorterToken(porter.UserName, porter);
 
             object porterDetails = new
             {
@@ -210,16 +193,65 @@ namespace HallManagementTest2.Controllers
                 porter.Gender,
                 porter.FirstName,
                 porter.LastName,
+                porter.Email,
+                porter.HallId,
                 porter.DateOfBirth,
                 porter.Mobile,
                 porter.Address,
                 porter.State,
                 porter.Role,
                 porter.AccessToken,
+                porter.RefreshToken,
                 porter.ProfileImageUrl
             };
 
             return Ok(porterDetails);
+        }
+
+        //Porter refresh token
+        [HttpPost("porter-refresh-token/{porterId:guid}")]
+        public async Task<ActionResult<string>> RefreshToken([FromRoute] Guid porterId)
+        {
+            var porter = await _porterRepository.GetPorter(porterId);
+
+            if (porter == null)
+            {
+                return NotFound();
+            }
+
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!porter.RefreshToken.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh Token");
+            }
+            else if (porter.TokenExpires < DateTime.Now)
+            {
+                return Unauthorized("Token Expired");
+            }
+
+            string token = _authService.CreatePorterToken(porter);
+            porter.AccessToken = token;
+
+            var newRefreshToken = _authService.GenerateRefreshToken();
+            _authService.SetPorterRefreshToken(newRefreshToken, porter, HttpContext);
+
+            await _porterRepository.UpdatePorterToken(porter.UserName, porter);
+
+            return Ok(new { token });
+        }
+
+        [HttpPost("porter-logout"), Authorize]
+        public IActionResult Logout()
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return BadRequest(new { message = "User is not authenticated" });
+            }
+
+            Response.Cookies.Delete("refreshToken"); // Remove the refresh token cookie
+
+            return Ok(new { message = "Logout successful" });
         }
     }
 }

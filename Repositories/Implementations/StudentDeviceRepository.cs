@@ -11,15 +11,16 @@ namespace HallManagementTest2.Repositories.Implementations
         private readonly ApplicationDbContext _context;
         private readonly IHallRepository _hallRepository;
         private readonly IStudentRepository _studentRepository;
+        private readonly IStudentDeviceRepository _studentDeviceRepository;
 
         public StudentDeviceRepository(ApplicationDbContext context, IHallRepository hallRepository
-                                        ,IStudentRepository studentRepository)
+                                        , IStudentRepository studentRepository)
         {
             _context = context;
             _hallRepository = hallRepository;
             _studentRepository = studentRepository;
         }
-        public async Task<StudentDevice> AddStudentDeviceAsync(StudentDevice request)
+        public async Task<StudentDevice> AddStudentDeviceAsync(Guid hallId, StudentDevice request)
         {
             var studentDevice = await _context.StudentDevices.AddAsync(request);
             await _context.SaveChangesAsync();
@@ -47,7 +48,7 @@ namespace HallManagementTest2.Repositories.Implementations
 
         public async Task<StudentDevice> GetStudentDeviceAsync(Guid studentDeviceId)
         {
-            return await _context.StudentDevices.Include(s => s.Student).FirstOrDefaultAsync(x => x.StudentDeviceId == studentDeviceId);
+            return await _context.StudentDevices.FirstOrDefaultAsync(x => x.StudentDeviceId == studentDeviceId);
         }
 
         public async Task<List<StudentDevice>> GetStudentDevices()
@@ -70,21 +71,19 @@ namespace HallManagementTest2.Repositories.Implementations
             return devicesInHall;
         }
 
-        public async Task<List<StudentDevice>> GetStudentsByMatricNo(Guid hallId, string matricNo)
+        public async Task<List<StudentDevice>> GetStudentDevicesByMatricNo(string matricNo)
         {
-            var existingHall = await _hallRepository.GetHallAsync(hallId);
-            var Students = await _studentRepository.GetStudentsAsync();
-            if (existingHall != null)
+            var devices = await GetStudentDevices();
+            var studentDevices = new List<StudentDevice>();
+
+            foreach (var device in devices)
             {
-                foreach (var student in Students)
+                if (device.MatricNo == matricNo)
                 {
-                    if (student.MatricNo == matricNo)
-                    {
-                        return student.StudentDevices.ToList();
-                    }
+                    studentDevices.Add(device);
                 }
             }
-            return null;
+            return studentDevices;            
         }
 
         public async Task<StudentDevice> UpdateStudentDevice(Guid studentDeviceId, StudentDevice request)
@@ -92,15 +91,28 @@ namespace HallManagementTest2.Repositories.Implementations
             var existingstudentDevice = await GetStudentDeviceAsync(studentDeviceId);
             if (existingstudentDevice != null)
             {
-                existingstudentDevice.SerialNo = request.SerialNo;
-                existingstudentDevice.Item = request.Item;
-                existingstudentDevice.Color = request.Color;
-                existingstudentDevice.Description = request.Description;
+                existingstudentDevice.HallId = request.HallId;
+                existingstudentDevice.StudentId = request.StudentId;
+                existingstudentDevice.MatricNo = request.MatricNo;
 
                 await _context.SaveChangesAsync();
                 return existingstudentDevice;
             }
             return null;
+        }
+
+        public async Task<List<StudentDevice>> GetStudentDevicesForStudent(Guid studentId)
+        {
+            var devices = await GetStudentDevices();
+            var devicesInHall = new List<StudentDevice>();
+            foreach (var device in devices)
+            {
+                if (device.StudentId == studentId)
+                {
+                    devicesInHall.Add(device);
+                }
+            }
+            return devicesInHall;
         }
     }
 }

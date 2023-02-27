@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HallManagementTest2.Models;
+using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests;
 using HallManagementTest2.Requests.Add;
@@ -65,6 +66,7 @@ namespace HallManagementTest2.Controllers
                 chiefHallAdmin.UserName,
                 chiefHallAdmin.FirstName,
                 chiefHallAdmin.LastName,
+                chiefHallAdmin.Email,
                 chiefHallAdmin.DateOfBirth,
                 chiefHallAdmin.Gender,
                 chiefHallAdmin.ProfileImageUrl,
@@ -170,17 +172,67 @@ namespace HallManagementTest2.Controllers
             string token = _authService.CreateChiefHallAdminToken(chiefHallAdmin);
             chiefHallAdmin.AccessToken = token;
 
-            await _chiefHallAdminRepository.UpdateChiefHallAdminAccessToken(chiefHallAdmin.UserName, chiefHallAdmin);
+            var refreshToken = _authService.GenerateRefreshToken();
+            _authService.SetCHiefHallAdminRefreshToken(refreshToken, chiefHallAdmin, HttpContext);
+
+            await _chiefHallAdminRepository.UpdateChiefHallAdminToken(chiefHallAdmin.UserName, chiefHallAdmin);
 
             object chiefHallAdminDetails = new
             {
                 chiefHallAdmin.ChiefHallAdminId, chiefHallAdmin.UserName, chiefHallAdmin.Gender,
                 chiefHallAdmin.FirstName, chiefHallAdmin.LastName, chiefHallAdmin.DateOfBirth,
                 chiefHallAdmin.Mobile, chiefHallAdmin.Address, chiefHallAdmin.State,
-                chiefHallAdmin.Role, chiefHallAdmin.AccessToken, chiefHallAdmin.ProfileImageUrl
+                chiefHallAdmin.Role, chiefHallAdmin.AccessToken, chiefHallAdmin.RefreshToken,
+                chiefHallAdmin.ProfileImageUrl
             };
 
             return Ok(chiefHallAdminDetails);
+        }
+
+        //Cheif Hall admin refresh token
+        [HttpPost("chiefHallAdmin-refresh-token/{chiefHallAdminId:guid}"), AllowAnonymous]
+        public async Task<ActionResult<string>> RefreshToken([FromRoute] Guid chiefHallAdminId)
+        {
+            var chiefHallAdmin = await _chiefHallAdminRepository.GetChiefHallAdmin(chiefHallAdminId);
+
+            if (chiefHallAdmin == null)
+            {
+                return NotFound();
+            }
+
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!chiefHallAdmin.RefreshToken.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh Token");
+            }
+            else if (chiefHallAdmin.TokenExpires < DateTime.Now)
+            {
+                return Unauthorized("Token Expired");
+            }
+
+            string token = _authService.CreateChiefHallAdminToken(chiefHallAdmin);
+            chiefHallAdmin.AccessToken = token;
+
+            var newRefreshToken = _authService.GenerateRefreshToken();
+            _authService.SetCHiefHallAdminRefreshToken(newRefreshToken, chiefHallAdmin, HttpContext);
+
+            await _chiefHallAdminRepository.UpdateChiefHallAdminToken(chiefHallAdmin.UserName, chiefHallAdmin);
+
+            return Ok(new { token });
+        }
+
+        [HttpPost("chiefHallAdmin-logout")]
+        public IActionResult Logout()
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return BadRequest(new { message = "User is not authenticated" });
+            }
+
+            Response.Cookies.Delete("refreshToken"); // Remove the refresh token cookie
+
+            return Ok(new { message = "Logout successful" });
         }
     }
 }

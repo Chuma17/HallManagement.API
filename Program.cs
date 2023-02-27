@@ -28,13 +28,18 @@ builder.Services.AddScoped<IChiefHallAdminRepository, ChiefHallAdminRepository>(
 builder.Services.AddScoped<IHallAdminRepository, HallAdminRepository>();
 builder.Services.AddScoped<IPorterRepository, PorterRepository>();
 
+//Structures
 builder.Services.AddScoped<IHallTypeRepository, HallTypeRepository>();
 builder.Services.AddScoped<IHallRepository, HallRepository>();
 builder.Services.AddScoped<IBlockRepository, BlockRepository>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+
+//Collections
 builder.Services.AddScoped<IStudentDeviceRepository, StudentDeviceRepository>();
 builder.Services.AddScoped<IComplaintFormRepository, ComplaintFormRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IExitPassRepository, ExitPassRepository>();
+
 builder.Services.AddScoped<AuthService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -74,8 +79,8 @@ builder.Services.AddCors((options) =>
 {
     options.AddPolicy("default", builder =>
     {
-        builder.WithOrigins("http://localhost:44324/")
-        .AllowAnyHeader()
+        //builder.WithOrigins("http://localhost:44324/")
+        builder.AllowAnyHeader()
         .WithMethods("GET", "POST", "PUT", "DELETE")
         .WithExposedHeaders("*")
         .AllowAnyOrigin();

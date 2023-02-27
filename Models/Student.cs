@@ -7,11 +7,12 @@ namespace HallManagementTest2.Models
     {
         [Key]
         public Guid StudentId { get; set; }
-        public int? StudyLevel { get; set; }
+        public int StudyLevel { get; set; }
         public string? School { get; set; }
         public string? Department { get; set; }
         public string? Course { get; set; }
-        public string? MatricNo { get; set; }
+        public string MatricNo { get; set; }
+        public bool IsBlocked { get; set; }
 
         public Guid? HallId { get; set; }
         public Guid? RoomId { get; set; }
@@ -20,5 +21,6 @@ namespace HallManagementTest2.Models
         public string Role { get; set; } = "Student";        
                
         public virtual ICollection<StudentDevice>? StudentDevices { get; set; }
+        public virtual ICollection<ExitPass>? ExitPasses { get; set; }
     }
 }

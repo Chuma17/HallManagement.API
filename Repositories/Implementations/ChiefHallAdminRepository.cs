@@ -83,12 +83,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return null;
         }
 
-        public async Task<ChiefHallAdmin> UpdateChiefHallAdminAccessToken(string userName, ChiefHallAdmin request)
+        public async Task<ChiefHallAdmin> UpdateChiefHallAdminToken(string userName, ChiefHallAdmin request)
         {
             var existingchiefHallAdmin = await GetChiefHallAdminByUserName(userName);
             if (existingchiefHallAdmin != null)
             {
                 existingchiefHallAdmin.AccessToken = request.AccessToken;
+                existingchiefHallAdmin.RefreshToken = request.RefreshToken;
 
                 await _context.SaveChangesAsync();
                 return existingchiefHallAdmin;

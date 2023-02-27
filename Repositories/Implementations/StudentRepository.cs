@@ -49,9 +49,9 @@ namespace HallManagementTest2.Repositories.Implementations
             return student;
         }
 
-        public async Task<Student> GetStudentByUserName(string userName)
+        public async Task<Student> GetStudentByMatricNo(string matricNo)
         {
-            var student = await _context.Students.Include(s => s.StudentDevices).FirstOrDefaultAsync(x => x.UserName == userName);
+            var student = await _context.Students.FirstOrDefaultAsync(x => x.MatricNo == matricNo);
             if (student != null)
             {
                 return student;
@@ -157,12 +157,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return null;
         }
 
-        public async Task<Student> UpdateStudentAccessToken(string userName, Student request)
+        public async Task<Student> UpdateStudentToken(string matricNo, Student request)
         {
-            var existingStudent = await GetStudentByUserName(userName);
+            var existingStudent = await GetStudentByMatricNo(matricNo);
             if (existingStudent != null)
             {
                 existingStudent.AccessToken = request.AccessToken;
+                existingStudent.RefreshToken = request.RefreshToken;
 
                 await _context.SaveChangesAsync();
                 return existingStudent;

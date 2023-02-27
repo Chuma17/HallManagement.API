@@ -11,8 +11,10 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Hall> UpdateBlockCount(Guid hallId, Hall request);
         Task<Hall> UpdateRoomCount(Guid hallId, Hall request);
         Task<Hall> UpdateStudentCount(Guid? hallId, Hall request);
+        Task<Hall> UpdateHallStatus(Guid? hallId, Hall request);
         Task<Hall> GetHallAsync(Guid? hallId);
         Task<List<Hall>> GetHallsByGender(string gender);
+        Task<List<Hall>> GetUnassignedHalls(string gender);
         Task<Hall> DeleteHallAsync(Guid hallId);
         Task<Hall> GetStudentsInHallAsync(Guid hallId);
         Task<Hall> GetPortersInHallAsync(Guid hallId);

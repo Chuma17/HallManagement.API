@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
+using HallManagementTest2.Data;
 using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HallManagementTest2.Controllers
 {
@@ -46,11 +48,20 @@ namespace HallManagementTest2.Controllers
             {
                 return BadRequest("The specified hall ID is invalid.");
             }
+            var blocks = await _blockRepository.GetBlocksAsync();
+            foreach (var block1 in blocks)
+            {
+                if (request.BlockName.ToUpper() == block1.BlockName.ToUpper())
+                {
+                    return BadRequest("Block name already exists");
+                }
+            }            
 
             var hall = await _hallRepository.GetHallAsync(request.HallId);
 
             var block = await _blockRepository.AddBlockAsync(_mapper.Map<Block>(request));
 
+            block.BlockName = request.BlockName.ToUpper();
             hall.BlockCount += 1;
             block.BlockGender = hall.HallGender;
             block.RoomSpace = hall.RoomSpace;

@@ -8,11 +8,10 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<List<Porter>> GetPortersInHall(Guid hallId);
         Task<Porter> GetPorter(Guid porterId);
         Task<Porter> GetPorterByUserName(string userName);
-        Task<Porter> GetPorterByHall(Guid hallId);
         Task<bool> Exists(Guid porterId);
         Task<Porter> UpdatePorter(Guid porterId, Porter request);
         Task<Porter> UpdatePorterPasswordHash(Guid porterId, Porter request);
-        Task<Porter> UpdatePorterAccessToken(string userName, Porter request);
+        Task<Porter> UpdatePorterToken(string userName, Porter request);
         Task<Porter> DeletePorterAsync(Guid porterId);
         Task<Porter> AddPorterAsync(Porter request);
         Task<bool> UpdateProfileImage(Guid porterId, string profileImageUrl);

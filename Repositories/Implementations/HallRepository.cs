@@ -2,6 +2,7 @@
 using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace HallManagementTest2.Repositories.Implementations
 {
@@ -99,6 +100,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Halls.Include(s => s.Students).FirstOrDefaultAsync(x => x.HallId == hallId);
         }
 
+        public async Task<List<Hall>> GetUnassignedHalls(string gender)
+        {
+            var halls = await GetHallsByGender(gender);
+            var filteredHalls = new List<Hall>();
+            foreach (var hall in halls)
+            {
+                if (!hall.IsAssigned)
+                {
+                    filteredHalls.Add(hall);
+                }
+            }
+            return filteredHalls;
+        }
+
         public async Task<Hall> UpdateBlockCount(Guid hallId, Hall request)
         {
             var existingHall = await GetHallAsync(hallId);
@@ -120,6 +135,19 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingHall.RoomSpace= request.RoomSpace;
                 existingHall.HallName = request.HallName;
                 existingHall.HallGender = request.HallGender;
+
+                await _context.SaveChangesAsync();
+                return existingHall;
+            }
+            return null;
+        }
+
+        public async Task<Hall> UpdateHallStatus(Guid? hallId, Hall request)
+        {
+            var existingHall = await GetHallAsync(hallId);
+            if (existingHall != null)
+            {
+                existingHall.IsAssigned = request.IsAssigned;               
 
                 await _context.SaveChangesAsync();
                 return existingHall;
@@ -152,6 +180,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 return existingHall;
             }
             return null;
-        }        
+        }
+        
     }
 }

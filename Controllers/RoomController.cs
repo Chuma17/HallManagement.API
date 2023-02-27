@@ -146,6 +146,10 @@ namespace HallManagementTest2.Controllers
                 }
                 else
                 {
+                    if (room.StudentCount != 0)
+                    {
+                        return BadRequest("The room has to be empty before it can be put under maintenance");
+                    }
                     room.IsUnderMaintenance = true;
                     await _roomRepository.UpdateRoomStatus(roomId, room);
                 }

@@ -46,16 +46,6 @@ namespace HallManagementTest2.Repositories.Implementations
             return porter;
         }
 
-        public async Task<Porter> GetPorterByHall(Guid hallId)
-        {
-            var porter = await _context.Porters.FirstOrDefaultAsync(x => x.HallId == hallId);
-            if (porter != null)
-            {
-                return porter;
-            }
-            return null;
-        }
-
         public async Task<Porter> GetPorterByUserName(string userName)
         {
             var porter = await _context.Porters.FirstOrDefaultAsync(x => x.UserName == userName);
@@ -108,12 +98,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return null;
         }
 
-        public async Task<Porter> UpdatePorterAccessToken(string userName, Porter request)
+        public async Task<Porter> UpdatePorterToken(string userName, Porter request)
         {
             var existingPorter = await GetPorterByUserName(userName);
             if (existingPorter != null)
             {
                 existingPorter.AccessToken = request.AccessToken;
+                existingPorter.RefreshToken = request.RefreshToken;
 
                 await _context.SaveChangesAsync();
                 return existingPorter;

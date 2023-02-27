@@ -45,6 +45,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return hallAdmin;
         }
 
+        public async Task<List<HallAdmin>> GetHallAdminsByGender(string gender)
+        {
+            var hallAdmins = await GetHallAdmins();
+            var filteredHallAdmins = new List<HallAdmin>();
+            foreach (var hallAdmin in filteredHallAdmins)
+            {
+                if (hallAdmin.Gender == gender)
+                {
+                    filteredHallAdmins.Add(hallAdmin);
+                }
+            }
+            return filteredHallAdmins;
+        }
+
         public async Task<HallAdmin> GetHallAdminByHall(Guid hallId)
         {
             var hallAdmin = await _context.HallAdmins.FirstOrDefaultAsync(x => x.HallId == hallId);
@@ -93,12 +107,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return null;
         }
 
-        public async Task<HallAdmin> UpdateHallAdminAccessToken(string userName, HallAdmin request)
+        public async Task<HallAdmin> UpdateHallAdminToken(string userName, HallAdmin request)
         {
             var existingHallAdmin = await GetHallAdminByUserName(userName);
             if (existingHallAdmin != null)
             {
                 existingHallAdmin.AccessToken = request.AccessToken;
+                existingHallAdmin.RefreshToken = request.RefreshToken;
 
                 await _context.SaveChangesAsync();
                 return existingHallAdmin;
@@ -124,5 +139,6 @@ namespace HallManagementTest2.Repositories.Implementations
         {
             throw new NotImplementedException();
         }
+       
     }
 }

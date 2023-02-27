@@ -8,11 +8,11 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<List<Student>> GetStudentsInHall(Guid hallId);
         Task<Student> GetStudentAsync(Guid studentId);
         Task<Student> GetStudentDevicesAsync(Guid studentId);
-        Task<Student> GetStudentByUserName(string userName);
+        Task<Student> GetStudentByMatricNo(string matricNo);
         Task<bool> Exists(Guid studentId);
         Task<Student> UpdateStudent(Guid studentId, Student request);
         Task<Student> UpdateStudentPasswordHash(Guid studentId, Student request);
-        Task<Student> UpdateStudentAccessToken(string userName, Student request);
+        Task<Student> UpdateStudentToken(string userName, Student request);
         Task<Student> DeleteStudentAsync(Guid studentId);
         Task<Student> AddStudentAsync(Student request);
         Task<Student> JoinHall(Guid? hallId, Guid studentId);

@@ -46,8 +46,8 @@ namespace HallManagementTest2.Repositories.Implementations
 
         public async Task<List<Block>> GetBlocksAsync()
         {
-            var blocks = _context.Blocks.ToListAsync();
-            return await blocks;
+            var blocks = await _context.Blocks.ToListAsync();
+            return blocks;
         }
 
         public async Task<List<Block>> GetBlocksInHall(Guid hallId)
@@ -64,16 +64,12 @@ namespace HallManagementTest2.Repositories.Implementations
             return blocksInHall;
         }
 
-        public async Task<Block> UpdateBlock(Guid blockId, Block request)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<Block> UpdateBlockRoomCount(Guid blockId, Block request)
         {
             var existingBlock = await GetBlockAsync(blockId);
             if (existingBlock != null)
             {
+                existingBlock.BlockName = request.BlockName;
                 existingBlock.BlockGender = request.BlockGender;
                 existingBlock.RoomSpace = request.RoomSpace;
                 existingBlock.AvailableRooms = request.AvailableRooms;

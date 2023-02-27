@@ -13,6 +13,7 @@ namespace HallManagementTest2.Models
         public int BlockCount { get; set; } = 0;
         public string? HallGender { get; set; }
         public string? HallName { get; set; }
+        public bool IsAssigned { get; set; } = false;
         public Guid HallTypeId { get; set; }
 
 
@@ -23,5 +24,6 @@ namespace HallManagementTest2.Models
         public virtual ICollection<Notification>? Notifications { get; set; }
         public virtual ICollection<ComplaintForm>? ComplaintForms { get; set; }
         public virtual ICollection<StudentDevice>? StudentDevices { get; set; }
+        public virtual ICollection<ExitPass>? ExitPasses { get; set; }
     }
 }

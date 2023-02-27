@@ -24,13 +24,14 @@ namespace HallManagementTest2.Controllers
         private readonly IBlockRepository _blockRepository;
         private readonly IComplaintFormRepository _complaintFormRepository;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IExitPassRepository _exitPassRepository;
 
         public HallController(IHallRepository hallRepository, IMapper mapper,
                                 IHallAdminRepository hallAdminRepository, IHallTypeRepository hallTypeRepository,
                                 IStudentDeviceRepository studentDeviceRepository, IStudentRepository studentRepository,
                                 IRoomRepository roomRepository, IPorterRepository porterRepository,
                                 IBlockRepository blockRepository, IComplaintFormRepository complaintFormRepository,
-                                INotificationRepository notificationRepository)
+                                INotificationRepository notificationRepository, IExitPassRepository exitPassRepository)
         {
             _hallRepository = hallRepository;
             _mapper = mapper;
@@ -43,15 +44,16 @@ namespace HallManagementTest2.Controllers
             _blockRepository = blockRepository;
             _complaintFormRepository = complaintFormRepository;
             _notificationRepository = notificationRepository;
+            _exitPassRepository = exitPassRepository;
         }
 
         //Retrieving all halls
         [HttpGet("get-all-halls")]
         public async Task<IActionResult> GetAllHalls()
         {
-            var hall = await _hallRepository.GetHallsAsync();
+            var halls = await _hallRepository.GetHallsAsync();
 
-            return Ok(hall);
+            return Ok(halls);
         }
 
         //Retrieving a single hall
@@ -59,28 +61,58 @@ namespace HallManagementTest2.Controllers
         public async Task<IActionResult> GetHallAsync([FromRoute] Guid hallId)
         {
             var hall = await _hallRepository.GetHallAsync(hallId);
-
             if (hall == null)
             {
                 return NotFound();
             }
 
-            return Ok(hall);
+            var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
+
+            object hallDetails = new
+            {
+                hall.HallId,
+                HallAdminName = hallAdmin?.FirstName ?? "empty",
+                hall.RoomCount,
+                hall.AvailableRooms,
+                hall.HallName,
+                hall.HallGender,
+                hall.RoomSpace,
+                hall.StudentCount,
+                hall.BlockCount,
+                hall.IsAssigned
+            };
+
+            return Ok(hallDetails);
         }
 
-        //Retrieving a single hall by gender
-        [HttpGet("get-halls-by-gender"), Authorize(Roles = "Student")]
+        //Retrieving halls by gender
+        [HttpGet("get-halls-by-gender"), Authorize]
         public async Task<IActionResult> GetHallByGenderAsync()
         {
             var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
-            var hall = await _hallRepository.GetHallsByGender(currentUserGender);
+            var halls = await _hallRepository.GetHallsByGender(currentUserGender);
 
-            if (hall == null)
+            if (halls == null)
             {
                 return NotFound();
             }
 
-            return Ok(hall);
+            return Ok(halls);
+        }
+
+        //Retrieving unassigned halls
+        [HttpGet("get-unassigned-halls"), Authorize(Roles = "ChiefHallAdmin")]
+        public async Task<IActionResult> GetUnassignedHalls()
+        {
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
+            var halls = await _hallRepository.GetUnassignedHalls(currentUserGender);
+
+            if (halls == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(halls);
         }
 
         //Retrieving students in a single hall
@@ -103,18 +135,12 @@ namespace HallManagementTest2.Controllers
                 var studentList = new
                 {
                     student.StudentId,
-                    student.UserName,
-                    student.Gender,
                     student.FirstName,
                     student.LastName,
-                    student.DateOfBirth,
-                    student.Mobile,
                     student.StudyLevel,
-                    student.Address,
                     student.Course,
                     student.Department,
                     student.School,
-                    student.State,
                 };
 
                 studentsArray.Add(studentList);
@@ -143,14 +169,8 @@ namespace HallManagementTest2.Controllers
                 var porterList = new
                 {
                     porter.PorterId,
-                    porter.UserName,
-                    porter.Gender,
                     porter.FirstName,
                     porter.LastName,
-                    porter.DateOfBirth,
-                    porter.Mobile,
-                    porter.Address,
-                    porter.State
                 };
 
                 portersArray.Add(porterList);
@@ -251,6 +271,15 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("The specified hall type ID is invalid.");
             }
 
+            var halls = await _hallRepository.GetHallsAsync();
+            foreach (var hall1 in halls)
+            {
+                if (request.HallName == hall1.HallName)
+                {
+                    return BadRequest("Hall already exists");
+                }
+            }
+
             var hallType = await _hallTypeRepository.GetHallTypeAsync(request.HallTypeId);
             var hallTypeRoomSpace = hallType.RoomSpaceCount;
             var hallGender = currentUserGender;
@@ -258,6 +287,7 @@ namespace HallManagementTest2.Controllers
             var hall = await _hallRepository.AddHallAsync(_mapper.Map<Hall>(request));
             hall.RoomSpace = hallTypeRoomSpace;
             hall.HallGender = hallGender;
+            hall.HallName = request.HallName.ToUpper();
 
             await _hallRepository.UpdateHall(hall.HallId, hall);
             return Ok(hall);
@@ -293,6 +323,12 @@ namespace HallManagementTest2.Controllers
                     await _notificationRepository.DeleteNotification(notification.NotiFicationId);
                 }
 
+                var exitPasses = await _exitPassRepository.GetExitPassesInHall(hallId);
+                foreach (var exitPass in exitPasses)
+                {
+                    await _exitPassRepository.DeleteExitPass(exitPass.ExitPassId);
+                }
+
                 var porters = await _porterRepository.GetPortersInHall(hallId);
                 foreach (var porter in porters)
                 {
@@ -311,7 +347,7 @@ namespace HallManagementTest2.Controllers
                     await _blockRepository.DeleteBlockAsync(block.BlockId);
                 }
 
-                var hall = await _hallRepository.DeleteHallAsync(hallId);
+                await _hallRepository.DeleteHallAsync(hallId);
                 return Ok("You have deleted this hall");
             }
 

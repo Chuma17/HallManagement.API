@@ -45,6 +45,9 @@ namespace HallManagementTest2.Profiles
             CreateMap<AddNotificationRequest, Notification>()
                 .AfterMap<AddNotificationRequesAfterMap>();
 
+            CreateMap<AddExitPassRequest, ExitPass>()
+                .AfterMap<AddExitPassRequestAfterMap>();
+
 
             CreateMap<UpdateStudentRequest, Student>();
 
