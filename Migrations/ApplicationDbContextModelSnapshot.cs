@@ -82,7 +82,7 @@ namespace HallManagementTest2.Migrations
 
                     b.HasKey("ChiefHallAdminId");
 
-                    b.ToTable("ChiefHallAdmins");
+                    b.ToTable("ChiefHallAdmins", (string)null);
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.Hall", b =>
@@ -97,6 +97,9 @@ namespace HallManagementTest2.Migrations
                     b.Property<Guid>("HallAdminId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("HallTypeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsFull")
                         .HasColumnType("bit");
 
@@ -105,7 +108,9 @@ namespace HallManagementTest2.Migrations
 
                     b.HasKey("HallId");
 
-                    b.ToTable("Halls");
+                    b.HasIndex("HallTypeId");
+
+                    b.ToTable("Halls", (string)null);
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.HallAdmin", b =>
@@ -174,75 +179,27 @@ namespace HallManagementTest2.Migrations
                     b.HasIndex("HallId")
                         .IsUnique();
 
-                    b.ToTable("HallAdmins");
+                    b.ToTable("HallAdmins", (string)null);
                 });
 
-            modelBuilder.Entity("HallManagementTest2.Models.Porter", b =>
+            modelBuilder.Entity("HallManagementTest2.Models.HallType", b =>
                 {
-                    b.Property<Guid>("PorterId")
+                    b.Property<Guid>("HallTypeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccessToken")
-                        .IsRequired()
+                    b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("HallCount")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("RoomSpaceCount")
+                        .HasColumnType("int");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("HallTypeId");
 
-                    b.Property<string>("Gender")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("HallId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("Mobile")
-                        .HasColumnType("bigint");
-
-                    b.Property<byte[]>("PasswordHash")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<byte[]>("PasswordSalt")
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("ProfileImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RefreshToken")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("State")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("TokenCreated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("TokenExpires")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("PorterId");
-
-                    b.HasIndex("HallId");
-
-                    b.ToTable("Porters");
+                    b.ToTable("HallTypes", (string)null);
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.Room", b =>
@@ -270,7 +227,7 @@ namespace HallManagementTest2.Migrations
 
                     b.HasIndex("HallId");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.Student", b =>
@@ -301,7 +258,7 @@ namespace HallManagementTest2.Migrations
                     b.Property<string>("Gender")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("HallId")
+                    b.Property<Guid?>("HallId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LastName")
@@ -327,7 +284,7 @@ namespace HallManagementTest2.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("RoomId")
+                    b.Property<Guid?>("RoomId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("School")
@@ -355,7 +312,7 @@ namespace HallManagementTest2.Migrations
 
                     b.HasIndex("RoomId");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.StudentDevice", b =>
@@ -391,7 +348,18 @@ namespace HallManagementTest2.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentDevices");
+                    b.ToTable("StudentDevices", (string)null);
+                });
+
+            modelBuilder.Entity("HallManagementTest2.Models.Hall", b =>
+                {
+                    b.HasOne("HallManagementTest2.Models.HallType", "HallType")
+                        .WithMany("Halls")
+                        .HasForeignKey("HallTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HallType");
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.HallAdmin", b =>
@@ -399,17 +367,6 @@ namespace HallManagementTest2.Migrations
                     b.HasOne("HallManagementTest2.Models.Hall", "Hall")
                         .WithOne("HallAdmin")
                         .HasForeignKey("HallManagementTest2.Models.HallAdmin", "HallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Hall");
-                });
-
-            modelBuilder.Entity("HallManagementTest2.Models.Porter", b =>
-                {
-                    b.HasOne("HallManagementTest2.Models.Hall", "Hall")
-                        .WithMany("Porters")
-                        .HasForeignKey("HallId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -431,15 +388,11 @@ namespace HallManagementTest2.Migrations
                 {
                     b.HasOne("HallManagementTest2.Models.Hall", "Hall")
                         .WithMany("Students")
-                        .HasForeignKey("HallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("HallId");
 
                     b.HasOne("HallManagementTest2.Models.Room", "Room")
                         .WithMany("Students")
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RoomId");
 
                     b.Navigation("Hall");
 
@@ -467,13 +420,16 @@ namespace HallManagementTest2.Migrations
                 {
                     b.Navigation("HallAdmin");
 
-                    b.Navigation("Porters");
-
                     b.Navigation("Rooms");
 
                     b.Navigation("StudentDevices");
 
                     b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("HallManagementTest2.Models.HallType", b =>
+                {
+                    b.Navigation("Halls");
                 });
 
             modelBuilder.Entity("HallManagementTest2.Models.Room", b =>

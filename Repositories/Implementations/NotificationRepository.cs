@@ -13,7 +13,7 @@ namespace HallManagementTest2.Repositories.Implementations
         {
             _context = context;
         }
-        public async Task<Notification> CreateNotification(Notification request)
+        public async Task<Notification> CreateNotification(Notification request, Guid hallId)
         {
             var notification = await _context.Notifications.AddAsync(request);
             await _context.SaveChangesAsync();
@@ -57,6 +57,19 @@ namespace HallManagementTest2.Repositories.Implementations
                 }
             }
             return notificationsInHall;
+        }
+
+        public async Task<Notification> UpdateNotification(Guid notificationId, Notification request)
+        {
+            var existingNotification = await GetNotification(notificationId);
+            if (existingNotification != null)
+            {
+                existingNotification.HallId = request.HallId;
+
+                await _context.SaveChangesAsync();
+                return existingNotification;
+            }
+            return null;
         }
     }
 }
