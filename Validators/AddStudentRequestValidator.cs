@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using HallManagementTest2.Repositories;
 using HallManagementTest2.Requests.Add;
 
 namespace HallManagementTest2.Validators
