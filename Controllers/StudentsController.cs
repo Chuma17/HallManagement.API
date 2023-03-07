@@ -126,7 +126,7 @@ namespace HallManagementTest2.Controllers
 
 
         //Retrieving a single student devices
-        [HttpPost("get-studentDevices"), Authorize(Roles = "Student")]
+        [HttpGet("get-studentDevices"), Authorize(Roles = "Student")]
         public async Task<IActionResult> GetStudentDevicesAsync()
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -264,7 +264,7 @@ namespace HallManagementTest2.Controllers
 
         //Join Hall
         [HttpPost("join-hall"), Authorize(Roles = "Student")]
-        public async Task<IActionResult> JoinHall([FromBody] Guid hallId)
+        public async Task<IActionResult> JoinHall([FromBody] JoinRequest joinHallRequest)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
@@ -278,7 +278,7 @@ namespace HallManagementTest2.Controllers
                 return NotFound();
             }
 
-            var hallExists = await _hallRepository.Exists(hallId);
+            var hallExists = await _hallRepository.Exists(joinHallRequest.HallId);
             if (!hallExists)
             {
                 return BadRequest("The specified hall is invalid.");
@@ -291,7 +291,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("You cannot select this hall because you have been blocked! Meet the hall admin.");
             }
 
-            if (existingStudent.HallId == hallId)
+            if (existingStudent.HallId == joinHallRequest.HallId)
             {
                 return BadRequest("You are already registered in this hall");
             }
@@ -301,16 +301,22 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("You are registered in another hall");
             }
 
-            var hall = await _hallRepository.GetHallAsync(hallId);
+            var UserGender = User.FindFirstValue(ClaimTypes.Gender);
+            var hall = await _hallRepository.GetHallAsync(joinHallRequest.HallId);
             if (!hall.IsAssigned)
             {
                 return BadRequest("This Hall is not available at the moment");
             }
 
+            if (UserGender != hall.HallGender)
+            {
+                return BadRequest("You cannot join a hall for the opposite gender");
+            }
+
             hall.StudentCount += 1;
 
-            await _studentRepository.JoinHall(hallId, currentUserIdGuid);
-            await _hallRepository.UpdateStudentCount(hallId, hall);
+            await _studentRepository.JoinHall(joinHallRequest.HallId, currentUserIdGuid);
+            await _hallRepository.UpdateStudentCount(joinHallRequest.HallId, hall);
             return Ok("You have successfully Joined this hall");
         }
 
@@ -364,7 +370,7 @@ namespace HallManagementTest2.Controllers
 
         //Join Block
         [HttpPost("join-block"), Authorize(Roles = "Student")]
-        public async Task<IActionResult> JoinBlock([FromBody] Guid blockId)
+        public async Task<IActionResult> JoinBlock([FromBody] JoinRequest joinRequest)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
@@ -378,7 +384,7 @@ namespace HallManagementTest2.Controllers
                 return NotFound();
             }
 
-            var blockExists = await _blockRepository.Exists(blockId);
+            var blockExists = await _blockRepository.Exists(joinRequest.BlockId);
             if (!blockExists)
             {
                 return BadRequest("The specified block is invalid.");
@@ -392,7 +398,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("You have to join a hall before you join a block");
             }
 
-            if (existingStudent.BlockId == blockId)
+            if (existingStudent.BlockId == joinRequest.BlockId)
             {
                 return BadRequest("You are already registered in this block");
             }
@@ -402,7 +408,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("You are already registered in another block");
             }
 
-            var block = await _blockRepository.GetBlockAsync(blockId);
+            var block = await _blockRepository.GetBlockAsync(joinRequest.BlockId);
 
             if (block.AvailableRooms == 0)
             {
@@ -411,8 +417,8 @@ namespace HallManagementTest2.Controllers
 
             block.StudentCount += 1;
 
-            await _studentRepository.JoinBlock(blockId, currentUserIdGuid);
-            await _blockRepository.UpdateBlockRoomCount(blockId, block);
+            await _studentRepository.JoinBlock(joinRequest.BlockId, currentUserIdGuid);
+            await _blockRepository.UpdateBlockRoomCount(joinRequest.BlockId, block);
             return Ok("You have successfully Joined the block");
         }
 
@@ -460,7 +466,7 @@ namespace HallManagementTest2.Controllers
 
         //Join Room
         [HttpPost("join-room"), Authorize(Roles = "Student")]
-        public async Task<IActionResult> JoinRoom([FromBody] Guid roomId)
+        public async Task<IActionResult> JoinRoom([FromBody] JoinRequest joinRequest)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
@@ -474,13 +480,13 @@ namespace HallManagementTest2.Controllers
                 return NotFound();
             }
 
-            var roomExists = await _roomRepository.Exists(roomId);
+            var roomExists = await _roomRepository.Exists(joinRequest.RoomId);
             if (!roomExists)
             {
                 return BadRequest("The specified room is invalid.");
             }
 
-            var room = await _roomRepository.GetRoomAsync(roomId);
+            var room = await _roomRepository.GetRoomAsync(joinRequest.RoomId);
             if (room.IsUnderMaintenance)
             {
                 return BadRequest("Room is under maintenance. Please select another room");
@@ -500,7 +506,7 @@ namespace HallManagementTest2.Controllers
                 return BadRequest("You have to join a block before you join a room");
             }
 
-            if (existingStudent.RoomId == roomId)
+            if (existingStudent.RoomId == joinRequest.RoomId)
             {
                 return BadRequest("You are already registered in this room");
             }
@@ -520,8 +526,8 @@ namespace HallManagementTest2.Controllers
             room.AvailableSpace -= 1;
             room.StudentCount += 1;
 
-            await _studentRepository.JoinRoom(roomId, currentUserIdGuid);
-            await _roomRepository.UpdateAvailableSpace(roomId, room);
+            await _studentRepository.JoinRoom(joinRequest.RoomId, currentUserIdGuid);
+            await _roomRepository.UpdateAvailableSpace(joinRequest.RoomId, room);
 
             if (room.AvailableSpace == 0 && room.StudentCount == room.MaxOccupants)
             {
@@ -533,7 +539,7 @@ namespace HallManagementTest2.Controllers
                     await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
                 }
 
-                await _roomRepository.UpdateAvailableSpace(roomId, room);
+                await _roomRepository.UpdateAvailableSpace(joinRequest.RoomId, room);
             }
 
             return Ok("You have successfully Joined the room");
@@ -633,6 +639,9 @@ namespace HallManagementTest2.Controllers
                 student.Gender,
                 student.FirstName,
                 student.LastName,
+                student.HallId,
+                student.BlockId,
+                student.RoomId,
                 student.StudyLevel,
                 student.Course,
                 student.Department,
@@ -679,7 +688,7 @@ namespace HallManagementTest2.Controllers
             return Ok(new { token });
         }
 
-        [HttpPost("student-logout"), Authorize]
+        [HttpPost("student-logout")]
         public IActionResult Logout()
         {
             if (!User.Identity.IsAuthenticated)

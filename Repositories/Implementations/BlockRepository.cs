@@ -64,6 +64,11 @@ namespace HallManagementTest2.Repositories.Implementations
             return blocksInHall;
         }
 
+        public async Task<Block> GetSingleBlockAsync(Guid blockId)
+        {
+            return await _context.Blocks.FirstOrDefaultAsync(x => x.BlockId == blockId);
+        }
+
         public async Task<Block> UpdateBlockRoomCount(Guid blockId, Block request)
         {
             var existingBlock = await GetBlockAsync(blockId);

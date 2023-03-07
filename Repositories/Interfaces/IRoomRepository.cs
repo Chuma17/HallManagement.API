@@ -11,6 +11,7 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Room> UpdateRoomCount(Guid roomId, Room request);
         Task<Room> DeleteRoomAsync(Guid roomId);
         Task<Room> GetRoomAsync(Guid? roomId);
+        Task<Room> GetSingleRoomAsync(Guid roomId);
         Task<List<Room>> GetRoomsAsync();
         Task<List<Room>> GetRoomsInBlockAsync(Guid blockId);
         Task<List<Room>> GetRoomsInHall(Guid hallId);

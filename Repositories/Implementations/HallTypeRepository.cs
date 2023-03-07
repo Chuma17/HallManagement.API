@@ -8,10 +8,12 @@ namespace HallManagementTest2.Repositories.Implementations
     public class HallTypeRepository : IHallTypeRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHallRepository _hallRepository;
 
-        public HallTypeRepository(ApplicationDbContext context)
+        public HallTypeRepository(ApplicationDbContext context, IHallRepository hallRepository)
         {
             _context = context;
+            _hallRepository = hallRepository;
         }
         public async Task<HallType> AddHallTypeAsync(HallType request)
         {

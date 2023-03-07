@@ -8,12 +8,10 @@ namespace HallManagementTest2.Repositories.Implementations
     public class RoomRepository : IRoomRepository
     {
         private readonly ApplicationDbContext _context;
-        private readonly IStudentRepository _studentRepository;
 
-        public RoomRepository(ApplicationDbContext context, IStudentRepository studentRepository)
+        public RoomRepository(ApplicationDbContext context)
         {
             _context = context;
-            _studentRepository = studentRepository;
         }
         public async Task<Room> AddRoomAsync(Room request)
         {
@@ -78,6 +76,11 @@ namespace HallManagementTest2.Repositories.Implementations
                 }
             }
             return roomsInHall;
+        }
+
+        public async Task<Room> GetSingleRoomAsync(Guid roomId)
+        {
+            return await _context.Rooms.FirstOrDefaultAsync(x => x.RoomId == roomId);
         }
 
         public async Task<Room> UpdateAvailableSpace(Guid? roomId, Room request)

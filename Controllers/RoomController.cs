@@ -34,9 +34,9 @@ namespace HallManagementTest2.Controllers
         }
         
 
-        //Retrieving a single room
+        //Retrieving students in a room
         [HttpGet("get-students-in-room/{roomId:guid}")]
-        public async Task<IActionResult> GetRoomAsync([FromRoute] Guid roomId)
+        public async Task<IActionResult> GetStudentsInRoomAsync([FromRoute] Guid roomId)
         {
             var room = await _roomRepository.GetRoomAsync(roomId);
 
@@ -44,6 +44,20 @@ namespace HallManagementTest2.Controllers
             {
                 return NotFound();
             }                        
+
+            return Ok(room.Students);
+        }
+
+        //Retrieving single room
+        [HttpGet("get-single-room/{roomId:guid}")]
+        public async Task<IActionResult> GetRoomAsync([FromRoute] Guid roomId)
+        {
+            var room = await _roomRepository.GetSingleRoomAsync(roomId);
+
+            if (room == null)
+            {
+                return NotFound();
+            }
 
             return Ok(room);
         }

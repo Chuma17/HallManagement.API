@@ -25,9 +25,9 @@ namespace HallManagementTest2.Controllers
             _hallRepository = hallRepository;
         }
 
-        //Retrieving a single block
+        //Retrieving a rooms in a block
         [HttpGet("get-rooms-in-block/{blockId:guid}")]
-        public async Task<IActionResult> GetBlockAsync([FromRoute] Guid blockId)
+        public async Task<IActionResult> GetRoomsInBlockAsync([FromRoute] Guid blockId)
         {
             var block = await _blockRepository.GetBlockAsync(blockId);
 
@@ -37,6 +37,20 @@ namespace HallManagementTest2.Controllers
             }
 
             return Ok(block.Rooms);
+        }
+        
+        //Retrieving a single block
+        [HttpGet("get-single-block/{blockId:guid}")]
+        public async Task<IActionResult> GetBlockAsync([FromRoute] Guid blockId)
+        {
+            var block = await _blockRepository.GetSingleBlockAsync(blockId);
+
+            if (block == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(block);
         }
 
         //Add block

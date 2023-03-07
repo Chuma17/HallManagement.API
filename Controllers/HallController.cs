@@ -67,11 +67,13 @@ namespace HallManagementTest2.Controllers
             }
 
             var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
+            var hallType = await _hallTypeRepository.GetHallTypeForHall(hall.HallTypeId);
 
             object hallDetails = new
             {
                 hall.HallId,
                 HallAdminName = hallAdmin?.FirstName ?? "empty",
+                HallType = hallType?.Description ?? "empty",
                 hall.RoomCount,
                 hall.AvailableRooms,
                 hall.HallName,
