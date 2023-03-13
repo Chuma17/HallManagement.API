@@ -43,6 +43,12 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Students.AnyAsync(x => x.StudentId == studentId);
         }
 
+        public async Task<Student> GetExitPassesAsync(Guid studentId)
+        {
+            var exitPasses = await _context.Students.Include(s => s.ExitPasses).FirstOrDefaultAsync(x => x.StudentId == studentId);
+            return exitPasses;
+        }
+
         public async Task<Student> GetStudentAsync(Guid studentId)
         {
             var student = await _context.Students.FirstOrDefaultAsync(x => x.StudentId == studentId);
@@ -184,5 +190,6 @@ namespace HallManagementTest2.Repositories.Implementations
             }
             return null;
         }
+        
     }
 }

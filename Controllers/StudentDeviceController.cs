@@ -50,7 +50,7 @@ namespace HallManagementTest2.Controllers
             var currentUserHallId = User.FindFirstValue(ClaimTypes.UserData);
             if (!Guid.TryParse(currentUserHallId, out Guid currentHallIdGuid))
             {
-                return Forbid();
+                return BadRequest("You must be registered in a hall first");
             }
 
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -69,7 +69,7 @@ namespace HallManagementTest2.Controllers
             studentDevice = await _studentDeviceRepository.AddStudentDeviceAsync(currentHallIdGuid, studentDevice);            
 
             await _studentDeviceRepository.UpdateStudentDevice(studentDevice.StudentDeviceId, studentDevice);
-            return Ok(studentDevice);
+            return Ok("The new device has been added successfully");
         }
 
         //Get StudentDevices by matric no

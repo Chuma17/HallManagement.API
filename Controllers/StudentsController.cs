@@ -147,6 +147,28 @@ namespace HallManagementTest2.Controllers
             return Ok(studentDevices);
         }
 
+        //Retrieving a single student exit passes
+        [HttpGet("get-exitPasses"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetExitPassesAsync()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var student = await _studentRepository.GetExitPassesAsync(currentUserIdGuid);
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            var studentExitPasses = student.ExitPasses;
+
+            return Ok(studentExitPasses);
+        }
+
 
         //Adding a student
         [HttpPost("student-registration")]
@@ -164,31 +186,9 @@ namespace HallManagementTest2.Controllers
             student.PasswordHash = passwordHash;
             student.PasswordSalt = passwordSalt;
 
-            await _studentRepository.UpdateStudentPasswordHash(student.StudentId, student);
+            await _studentRepository.UpdateStudentPasswordHash(student.StudentId, student);            
 
-            object studentDetails = new
-            {
-                student.StudentId,
-                student.UserName,
-                student.Gender, 
-                student.FirstName,
-                student.LastName,
-                student.DateOfBirth,
-                student.Mobile,
-                student.StudyLevel,
-                student.Address,
-                student.Course,
-                student.Department,
-                student.School,
-                student.State, 
-                student.HallId,
-                student.RoomId,
-                student.Role,
-                student.AccessToken,
-                student.ProfileImageUrl
-            };
-
-            return Ok(new { studentDetails });
+            return Ok("Student account created successfully");
         }
 
 
@@ -254,7 +254,7 @@ namespace HallManagementTest2.Controllers
                         UpdatedStudent.Role
                     };
 
-                    return Ok(updatedStudentDetails);
+                    return Ok("Account Updated successfully");
                 }
             }
 
@@ -306,6 +306,16 @@ namespace HallManagementTest2.Controllers
             if (!hall.IsAssigned)
             {
                 return BadRequest("This Hall is not available at the moment");
+            }
+
+            if (hall.BlockCount == 0)
+            {
+                return BadRequest("There are no blocks in this hall");
+            }
+
+            if (hall.AvailableRooms == 0)
+            {
+                return BadRequest("There are no available rooms at the moment");
             }
 
             if (UserGender != hall.HallGender)
@@ -409,6 +419,11 @@ namespace HallManagementTest2.Controllers
             }
 
             var block = await _blockRepository.GetBlockAsync(joinRequest.BlockId);
+
+            if (block.RoomCount == 0)
+            {
+                return BadRequest("There are no rooms in this block");
+            }
 
             if (block.AvailableRooms == 0)
             {
@@ -632,6 +647,10 @@ namespace HallManagementTest2.Controllers
 
             await _studentRepository.UpdateStudentToken(student.MatricNo, student);
 
+            var block = await _blockRepository.GetBlockAsync(student.BlockId);
+            var hall = await _hallRepository.GetHallAsync(student.HallId);
+            var room = await _roomRepository.GetRoomAsync(student.RoomId);
+
             object studentDetails = new
             {
                 student.StudentId,
@@ -642,6 +661,9 @@ namespace HallManagementTest2.Controllers
                 student.HallId,
                 student.BlockId,
                 student.RoomId,
+                HallName = hall?.HallName ?? "empty",
+                BlockName = block?.BlockName ?? "empty",
+                RoomNumber = room?.RoomNumber ?? "empty",
                 student.StudyLevel,
                 student.Course,
                 student.Department,

@@ -11,7 +11,5 @@
 
 
         public Guid HallId { get; set; }
-        //public virtual Hall? Hall { get; set; }
-
     }
 }

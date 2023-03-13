@@ -4,6 +4,8 @@ using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace HallManagementTest2.Controllers
@@ -52,36 +54,37 @@ namespace HallManagementTest2.Controllers
                 }
 
                 var student = await _studentRepository.GetStudentAsync(currentUserIdGuid);
-                var hall = await _hallRepository.GetHallAsync(student.HallId);
 
-                if (student != null)
-                {
-                    var exit = _mapper.Map<ExitPass>(request);
-                    exit.StudentId = currentUserIdGuid;
-                    exit.HallId = hall.HallId;
-
-                    if (exit.DateOfReturn < exit.DateOfExit)
-                    {
-                        return BadRequest("Your date of return must be after your date of exit");
-                    }
-                    if (exit.DateOfExit < DateTime.Now || exit.DateOfReturn < DateTime.Now)
-                    {
-                        return BadRequest("Your date of return and exit cannot be before today");
-                    }
-
-                    var exitPass = await _exitPassRepository.AddExitPassAsync(exit, hall.HallId, student.StudentId);
-                    return Ok(exitPass);
-                }
-
-                else
+                if (student == null)
                 {
                     return NotFound();
                 }
 
+                if (student.HallId == null || student.BlockId == null || student.RoomId == null)
+                {
+                    return BadRequest("You must be registered in a hall, block and room!");
+                }
+
+                var exit = _mapper.Map<ExitPass>(request);
+                var hall = await _hallRepository.GetHallAsync(student.HallId);
+
+                exit.StudentId = currentUserIdGuid;
+                exit.HallId = hall.HallId;
+
+                if (exit.DateOfReturn < exit.DateOfExit)
+                {
+                    return BadRequest("Your date of return must be after your date of exit");
+                }
+                if (exit.DateOfExit < DateTime.Now || exit.DateOfReturn < DateTime.Now)
+                {
+                    return BadRequest("Your date of return and exit cannot be before today");
+                }
+
+                await _exitPassRepository.AddExitPassAsync(exit, hall.HallId, student.StudentId);
+                return Ok("Exit Pass has been created successfully!");
             }
 
             return Forbid();
-
         }
 
         //single exit pass
@@ -94,7 +97,28 @@ namespace HallManagementTest2.Controllers
                 return NotFound();
             }
 
-            return Ok(exitPass);
+            var hall = await _hallRepository.GetHallAsync(exitPass.HallId);
+            var student = await _studentRepository.GetStudentAsync(exitPass.StudentId);
+            var fullName = student.FirstName + " " + student.LastName;
+
+            object exitPassDetails = new
+            {
+                exitPass.ExitPassId,
+                exitPass.StudentId,
+                exitPass.DateOfExit,
+                exitPass.DateOfReturn,
+                exitPass.ReasonForLeaving,
+                exitPass.HallId,
+                exitPass.StateOfArrival,
+                exitPass.Address,
+                HallName = hall?.HallName ?? "empty",
+                StudentName = fullName ?? "empty",
+                StudentMatricNo = student?.MatricNo ?? "empty",
+                exitPass.IsApproved,
+                exitPass.HasReturned,                
+            };
+
+            return Ok(exitPassDetails);
         }
 
         //search for exit pass by matric no

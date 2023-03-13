@@ -72,7 +72,7 @@ namespace HallManagementTest2.Controllers
             object hallDetails = new
             {
                 hall.HallId,
-                HallAdminName = hallAdmin?.FirstName ?? "empty",
+                HallAdminName = hallAdmin?.FirstName ?? "Not Available",
                 HallType = hallType?.Description ?? "empty",
                 hall.RoomCount,
                 hall.AvailableRooms,

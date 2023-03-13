@@ -1,5 +1,4 @@
 ﻿using HallManagementTest2.Models;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,7 +14,6 @@ namespace HallManagementTest2.Services
         {
             _configuration = configuration;
         }
-
 
 
         //Student Access Token

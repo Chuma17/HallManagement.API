@@ -99,7 +99,7 @@ namespace HallManagementTest2.Controllers
             await _roomRepository.UpdateRoomCount(room.RoomId, room);
             await _hallRepository.UpdateRoomCount(request.HallId, hall);
             await _blockRepository.UpdateBlockRoomCount(request.BlockId, block);
-            return Ok(room);
+            return Ok("Room has been added successfully");
         }
 
         //Delete room

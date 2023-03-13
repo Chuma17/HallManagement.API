@@ -35,6 +35,11 @@ namespace HallManagementTest2.Controllers
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
             {
+                if (request == null)
+                {
+                    return BadRequest();
+                }
+
                 var hallAdmin = await _hallAdminRepository.GetHallAdmin(currentUserIdGuid);
                 if (hallAdmin != null)
                 {
@@ -49,7 +54,7 @@ namespace HallManagementTest2.Controllers
                     var notification = await _notificationRepository.CreateNotification(notif, notif.HallId);                    
 
                     await _notificationRepository.UpdateNotification(notification.NotiFicationId, notification);
-                    return Ok(notification);
+                    return Ok("Notification Posted succesfully!");
 
                 }
 
@@ -68,7 +73,7 @@ namespace HallManagementTest2.Controllers
                     var notification = await _notificationRepository.CreateNotification(notif, notif.HallId);
 
                     await _notificationRepository.UpdateNotification(notification.NotiFicationId, notification);
-                    return Ok(notification);
+                    return Ok("Notification Posted succesfully!");
 
                 }
             }

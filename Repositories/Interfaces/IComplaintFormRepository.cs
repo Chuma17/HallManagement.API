@@ -6,8 +6,9 @@ namespace HallManagementTest2.Repositories.Interfaces
     {
         Task<List<ComplaintForm>> GetComplaintFormsAsync();
         Task<List<ComplaintForm>> GetComplaintFormsInHall(Guid hallId);
-        Task<ComplaintForm> AddComplaintFormAsync(ComplaintForm request);
+        Task<ComplaintForm> AddComplaintFormAsync(ComplaintForm request, Guid hallId);
         Task<ComplaintForm> DeleteComplaintForm(Guid complaintFormId);
         Task<ComplaintForm> GetComplaintForm(Guid complaintFormId);
+        Task<ComplaintForm> UpdateComplaintForm(Guid complaintFormId, ComplaintForm request);
     }
 }

@@ -13,7 +13,7 @@ namespace HallManagementTest2.Repositories.Implementations
         {
             _context = context;
         }
-        public async Task<ComplaintForm> AddComplaintFormAsync(ComplaintForm request)
+        public async Task<ComplaintForm> AddComplaintFormAsync(ComplaintForm request, Guid hallId)
         {
             var complaintForm = await _context.ComplaintForms.AddAsync(request);
             await _context.SaveChangesAsync();
@@ -57,6 +57,19 @@ namespace HallManagementTest2.Repositories.Implementations
                 }
             }
             return complaintsInHall;
+        }
+
+        public async Task<ComplaintForm> UpdateComplaintForm(Guid complaintFormId, ComplaintForm request)
+        {
+            var existingComplaint = await GetComplaintForm(complaintFormId);
+            if (existingComplaint != null)
+            {
+                existingComplaint.HallId = request.HallId;
+
+                await _context.SaveChangesAsync();
+                return existingComplaint;
+            }
+            return null;
         }
     }
 }
