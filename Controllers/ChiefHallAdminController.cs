@@ -70,9 +70,6 @@ namespace HallManagementTest2.Controllers
                 chiefHallAdmin.DateOfBirth,
                 chiefHallAdmin.Gender,
                 chiefHallAdmin.ProfileImageUrl,
-                chiefHallAdmin.Mobile,
-                chiefHallAdmin.Address,
-                chiefHallAdmin.State,
                 chiefHallAdmin.Role,
             };
 
@@ -80,7 +77,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Adding a chief hall admin
-        [HttpPost("chiefHallAdmin-registration")]
+        [HttpPost("chiefHallAdmin-registration"), AllowAnonymous]
         public async Task<ActionResult<ChiefHallAdmin>> AddChiefHallAdmin([FromBody] AddChiefHallAdminRequest request)
         {
             if (request == null)
@@ -88,32 +85,18 @@ namespace HallManagementTest2.Controllers
                 return BadRequest();
             }
 
-            _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);            
+            _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-            var chiefHallAdmin = await _chiefHallAdminRepository.AddChiefHallAdminAsync(_mapper.Map<ChiefHallAdmin>(request));
+            var chiefHallAdmin = _mapper.Map<ChiefHallAdmin>(request);
 
             chiefHallAdmin.PasswordHash = passwordHash;
             chiefHallAdmin.PasswordSalt = passwordSalt;
 
-            await _chiefHallAdminRepository.UpdateChiefHallAdminPasswordHash(chiefHallAdmin.ChiefHallAdminId, chiefHallAdmin);
+            await _chiefHallAdminRepository.AddChiefHallAdminAsync(chiefHallAdmin);
 
-            object chiefHallAdminDetails = new
-            {
-                chiefHallAdmin.ChiefHallAdminId,
-                chiefHallAdmin.UserName,
-                chiefHallAdmin.Gender,
-                chiefHallAdmin.FirstName,
-                chiefHallAdmin.LastName,
-                chiefHallAdmin.DateOfBirth,
-                chiefHallAdmin.Mobile,
-                chiefHallAdmin.Address,
-                chiefHallAdmin.State,
-                chiefHallAdmin.Role,
-                chiefHallAdmin.AccessToken,
-                chiefHallAdmin.ProfileImageUrl
-            };
+            await _chiefHallAdminRepository.UpdateChiefHallAdminPasswordHash(chiefHallAdmin.ChiefHallAdminId, chiefHallAdmin);            
 
-            return Ok(new { chiefHallAdminDetails });
+            return Ok("Account Created successfully");
         }
 
         //Deleting a chief hall admin
@@ -139,19 +122,8 @@ namespace HallManagementTest2.Controllers
                 var updatedChiefHallAdmin = await _chiefHallAdminRepository.UpdateChiefHallAdmin(chiefHallAdminId, _mapper.Map<ChiefHallAdmin>(request));
 
                 if (updatedChiefHallAdmin != null)
-                {
-                    var UpdatedChiefHallAdmin = _mapper.Map<ChiefHallAdmin>(updatedChiefHallAdmin);
-
-                    object updatedchiefHallAdminDetails = new
-                    {
-                        UpdatedChiefHallAdmin.UserName, UpdatedChiefHallAdmin.Gender,
-                        UpdatedChiefHallAdmin.FirstName, UpdatedChiefHallAdmin.LastName,
-                        UpdatedChiefHallAdmin.DateOfBirth, UpdatedChiefHallAdmin.Mobile,
-                        UpdatedChiefHallAdmin.Address, UpdatedChiefHallAdmin.State,
-                        UpdatedChiefHallAdmin.Role,
-                    };
-
-                    return Ok(updatedchiefHallAdminDetails);
+                {                    
+                    return Ok("Account Updated Successfully");
                 }
             }
 
@@ -179,10 +151,15 @@ namespace HallManagementTest2.Controllers
 
             object chiefHallAdminDetails = new
             {
-                chiefHallAdmin.ChiefHallAdminId, chiefHallAdmin.UserName, chiefHallAdmin.Gender,
-                chiefHallAdmin.FirstName, chiefHallAdmin.LastName, chiefHallAdmin.DateOfBirth,
-                chiefHallAdmin.Mobile, chiefHallAdmin.Address, chiefHallAdmin.State,
-                chiefHallAdmin.Role, chiefHallAdmin.AccessToken, chiefHallAdmin.RefreshToken,
+                chiefHallAdmin.ChiefHallAdminId, 
+                chiefHallAdmin.UserName, 
+                chiefHallAdmin.Gender,
+                chiefHallAdmin.FirstName, 
+                chiefHallAdmin.LastName, 
+                chiefHallAdmin.DateOfBirth,
+                chiefHallAdmin.Role, 
+                chiefHallAdmin.AccessToken, 
+                chiefHallAdmin.RefreshToken,
                 chiefHallAdmin.ProfileImageUrl
             };
 

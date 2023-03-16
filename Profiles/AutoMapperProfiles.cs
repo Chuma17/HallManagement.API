@@ -51,19 +51,11 @@ namespace HallManagementTest2.Profiles
 
             CreateMap<UpdateStudentRequest, Student>();
 
-            CreateMap<UpdateHallTypeRequest, HallType>();
-
-            CreateMap<UpdateHallRequest, Hall>();
-
-            CreateMap<UpdateStudentDeviceRequest, StudentDevice>();
-
             CreateMap<UpdateChiefHallAdminRequest, ChiefHallAdmin>();   
             
             CreateMap<UpdateHallAdminRequest, HallAdmin>();  
             
             CreateMap<UpdatePorterRequest, Porter>();
-
-            CreateMap<UpdateBlockRequest, Block>();            
         }
     }
 }

@@ -31,26 +31,40 @@ namespace HallManagementTest2.Controllers
             return Ok(hallTypes);
         }
 
-        //Retrieving a single hall type
+        //Retrieving halls in a hall type
         [HttpGet("get-halls-in-hallType/{hallTypeId:guid}")]
-        public async Task<IActionResult> GetHallTypeAsync([FromRoute] Guid hallTypeId)
+        public async Task<IActionResult> GetHallsInHallTypeAsync([FromRoute] Guid hallTypeId)
         {
-            var hallType = await _hallTypeRepository.GetHallTypeAsync(hallTypeId);
-            
+            var hallType = await _hallTypeRepository.GetHallsInHallType(hallTypeId);
+
             if (hallType == null)
             {
                 return NotFound();
-            }            
+            }
 
             return Ok(hallType.Halls);
         }
 
+        //Retrieving a single hall type
+        [HttpGet("get-hallType/{hallTypeId:guid}")]
+        public async Task<IActionResult> GetHallTypeAsync([FromRoute] Guid hallTypeId)
+        {
+            var hallType = await _hallTypeRepository.GetHallTypeAsync(hallTypeId);
+
+            if (hallType == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(hallType);
+        }
+
         //Add hall type
-        [HttpPost("add-hallType"), Authorize(Roles = "ChiefHallAdmin")]
+        [HttpPost("add-hallType")]
         public async Task<ActionResult<HallType>> AddHallType([FromBody] AddHallTypeRequest request)
         {
-            var hallType = await _hallTypeRepository.AddHallTypeAsync(_mapper.Map<HallType>(request));
-            return Ok(hallType);
+            await _hallTypeRepository.AddHallTypeAsync(_mapper.Map<HallType>(request));
+            return Ok("Hall Type added successfully");
         }
 
         //Delete hall type
@@ -59,26 +73,14 @@ namespace HallManagementTest2.Controllers
         {
             if (await _hallTypeRepository.Exists(hallTypeId))
             {
-                var hallType = await _hallTypeRepository.DeleteHallTypeAsync(hallTypeId);
-                return Ok(_mapper.Map<HallType>(hallType));
-            }
 
-            return NotFound();
-        }
-
-        //Updating a Hall type Record
-        [HttpPut("update-hallType/{hallTypeId:guid}"), Authorize(Roles = "ChiefHallAdmin")]
-        public async Task<IActionResult> UpdateStudentAsync([FromRoute] Guid hallTypeId, [FromBody] UpdateHallTypeRequest request)
-        {
-            if (await _hallTypeRepository.Exists(hallTypeId))
-            {
-                //Update Details
-                var updatedHallType = await _hallTypeRepository.UpdateHallType(hallTypeId, _mapper.Map<HallType>(request));
-
-                if (updatedHallType != null)
+                var hallType = await _hallTypeRepository.GetHallTypeAsync(hallTypeId);
+                if (hallType.HallCount == 0)
                 {
-                    return Ok(_mapper.Map<HallType>(updatedHallType));
+                    await _hallTypeRepository.DeleteHallTypeAsync(hallTypeId);
+                    return Ok("Hall Type deleted");
                 }
+                return BadRequest("There are still halls under this hall type");
             }
 
             return NotFound();

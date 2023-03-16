@@ -8,7 +8,6 @@ namespace HallManagementTest2.Models
         [Key]
         public Guid StudentId { get; set; }
         public int StudyLevel { get; set; }
-        public string? School { get; set; }
         public string? Department { get; set; }
         public string? Course { get; set; }
         public string MatricNo { get; set; }

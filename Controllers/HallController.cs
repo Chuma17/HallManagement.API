@@ -88,7 +88,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Retrieving halls by gender
-        [HttpGet("get-halls-by-gender"), Authorize]
+        [HttpGet("get-halls-by-gender"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<IActionResult> GetHallByGenderAsync()
         {
             var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
@@ -140,9 +140,7 @@ namespace HallManagementTest2.Controllers
                     student.FirstName,
                     student.LastName,
                     student.StudyLevel,
-                    student.Course,
                     student.Department,
-                    student.School,
                 };
 
                 studentsArray.Add(studentList);
@@ -308,7 +306,7 @@ namespace HallManagementTest2.Controllers
             hall.HallName = request.HallName.ToUpper();
 
             await _hallRepository.UpdateHall(hall.HallId, hall);
-            return Ok(hall);
+            return Ok("Hall added successfully");
         }
 
         //Delete hall
@@ -317,16 +315,16 @@ namespace HallManagementTest2.Controllers
         {
             if (await _hallRepository.Exists(hallId))
             {
-                var studentDevices = await _studentDeviceRepository.GetStudentDevicesInHall(hallId);
-                foreach (var device in studentDevices)
+                var hall = await _hallRepository.GetHallAsync(hallId);
+                if (hall.StudentCount != 0)
                 {
-                    await _studentDeviceRepository.DeleteStudentDeviceAsync(device.StudentDeviceId);
+                    return BadRequest("There are still students registered in this hall");
                 }
 
-                var students = await _studentRepository.GetStudentsInHall(hallId);
-                foreach (var student in students)
+                var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
+                if (hallAdmin != null)
                 {
-                    await _studentRepository.DeleteStudentAsync(student.StudentId);
+                    await _hallAdminRepository.DeleteHallAdminAsync(hallAdmin.HallAdminId);
                 }
 
                 var complaints = await _complaintFormRepository.GetComplaintFormsInHall(hallId);
@@ -371,47 +369,6 @@ namespace HallManagementTest2.Controllers
 
             return NotFound();
         }
-
-        //Updating a Hall Record
-        [HttpPut("update-hall/{hallId:guid}"), Authorize(Roles = "ChiefHallAdmin,HallAdmin")]
-        public async Task<IActionResult> UpdateRoomAsync([FromRoute] Guid hallId, [FromBody] UpdateHallRequest request)
-        {
-            if (await _hallRepository.Exists(hallId))
-            {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
-                {
-                    var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
-
-                    if (hallAdmin != null)
-                    {
-                        if (hallAdmin.HallAdminId != currentUserIdGuid)
-                        {
-                            return BadRequest("You are not the Hall Admin assigned to this hall");
-                        }
-                    }
-                    else
-                    {
-                        return BadRequest("You are not the Hall Admin assigned to this hall");
-                    }
-
-                }
-                else
-                {
-                    return Forbid();
-                }
-
-
-                //Update Details
-                var updatedHall = await _hallRepository.UpdateHall(hallId, _mapper.Map<Hall>(request));
-
-                if (updatedHall != null)
-                {
-                    return Ok(_mapper.Map<Hall>(updatedHall));
-                }
-            }
-
-            return NotFound();
-        }
+        
     }
 }

@@ -41,9 +41,14 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.HallTypes.AnyAsync(x => x.HallTypeId == hallTypeId);
         }
 
-        public async Task<HallType> GetHallTypeAsync(Guid hallTypeId)
+        public async Task<HallType> GetHallsInHallType(Guid hallTypeId)
         {
             return await _context.HallTypes.Include(s => s.Halls).FirstOrDefaultAsync(x => x.HallTypeId == hallTypeId);
+        }
+
+        public async Task<HallType> GetHallTypeAsync(Guid hallTypeId)
+        {
+            return await _context.HallTypes.FirstOrDefaultAsync(x => x.HallTypeId == hallTypeId);
         }
 
         public async Task<HallType> GetHallTypeForHall(Guid hallTypeId)
@@ -56,20 +61,6 @@ namespace HallManagementTest2.Repositories.Implementations
         {
             var hallType = _context.HallTypes.ToListAsync();
             return await hallType;
-        }
-
-        public async Task<HallType> UpdateHallType(Guid hallTypeId, HallType request)
-        {
-            var existingHallType = await GetHallTypeAsync(hallTypeId);
-            if (existingHallType != null)
-            {
-                existingHallType.Description = request.Description;
-                existingHallType.RoomSpaceCount = request.RoomSpaceCount;
-
-                await _context.SaveChangesAsync();
-                return existingHallType;
-            }
-            return null;
-        }
+        }        
     }
 }

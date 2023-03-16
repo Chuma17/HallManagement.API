@@ -86,10 +86,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingPorter.LastName = request.LastName;
                 existingPorter.Email = request.Email;
                 existingPorter.DateOfBirth = request.DateOfBirth;
-                existingPorter.Mobile = request.Mobile;
                 existingPorter.Gender = request.Gender;
-                existingPorter.Address = request.Address;
-                existingPorter.State = request.State;
                 existingPorter.UserName = request.UserName;
 
                 await _context.SaveChangesAsync();

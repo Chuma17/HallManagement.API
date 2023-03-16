@@ -69,10 +69,7 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.LastName,
                 hallAdmin.DateOfBirth,
                 hallAdmin.Gender,
-                hallAdmin.ProfileImageUrl,
-                hallAdmin.Mobile,
-                hallAdmin.Address,
-                hallAdmin.State,
+                hallAdmin.ProfileImageUrl,                
                 hallAdmin.Role,
             };
 
@@ -104,21 +101,18 @@ namespace HallManagementTest2.Controllers
                 hall.HallName,
                 hallAdmin.DateOfBirth,
                 hallAdmin.Gender,
-                hallAdmin.ProfileImageUrl,
-                hallAdmin.Mobile,
-                hallAdmin.Address,
-                hallAdmin.State,
+                hallAdmin.ProfileImageUrl,                
                 hallAdmin.Role,
             };
 
             return Ok(hallAdminDetails);
         }
 
-        [HttpGet("get-HallAdmins-by-gender")]
+        [HttpGet("get-unassigned-HallAdmins")]
         public async Task<IActionResult> GetHallAdminByGenderAsync()
         {
             var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
-            var hallAdmins = await _hallAdminRepository.GetHallAdminsByGender(currentUserGender);
+            var hallAdmins = await _hallAdminRepository.GetUnassignedHallAdmins(currentUserGender);
 
             if (hallAdmins == null)
             {
@@ -145,33 +139,19 @@ namespace HallManagementTest2.Controllers
 
             _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-            var hallAdmin = await _hallAdminRepository.AddHallAdminAsync(_mapper.Map<HallAdmin>(request));
+            var hallAdmin = _mapper.Map<HallAdmin>(request);
+
             var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
             hall.IsAssigned = true;
 
             hallAdmin.PasswordHash = passwordHash;
             hallAdmin.PasswordSalt = passwordSalt;
 
+            await _hallAdminRepository.AddHallAdminAsync(hallAdmin);
             await _hallAdminRepository.UpdateHallAdminPasswordHash(hallAdmin.HallAdminId, hallAdmin);
-            await _hallRepository.UpdateHallStatus(hall.HallId, hall);
+            await _hallRepository.UpdateHallStatus(hall.HallId, hall);           
 
-            object hallAdminDetails = new
-            {
-                hallAdmin.HallAdminId,
-                hallAdmin.UserName,
-                hallAdmin.Gender,
-                hallAdmin.FirstName,
-                hallAdmin.LastName,
-                hallAdmin.DateOfBirth,
-                hallAdmin.Mobile,
-                hallAdmin.Address,
-                hallAdmin.State,
-                hallAdmin.Role,
-                hallAdmin.AccessToken,
-                hallAdmin.ProfileImageUrl
-            };
-
-            return Ok(new { hallAdminDetails });
+            return Ok("Account created successfully");
         }
 
         //Deleting a hall admin
@@ -209,23 +189,8 @@ namespace HallManagementTest2.Controllers
                 var updatedHallAdmin = await _hallAdminRepository.UpdateHallAdmin(currentUserIdGuid, _mapper.Map<HallAdmin>(request));
 
                 if (updatedHallAdmin != null)
-                {
-                    var UpdatedHallAdmin = _mapper.Map<HallAdmin>(updatedHallAdmin);
-
-                    object updatedHallAdminDetails = new
-                    {
-                        UpdatedHallAdmin.UserName,
-                        UpdatedHallAdmin.Gender,
-                        UpdatedHallAdmin.FirstName,
-                        UpdatedHallAdmin.LastName,
-                        UpdatedHallAdmin.DateOfBirth,
-                        UpdatedHallAdmin.Mobile,
-                        UpdatedHallAdmin.Address,
-                        UpdatedHallAdmin.State,
-                        UpdatedHallAdmin.Role,
-                    };
-
-                    return Ok(updatedHallAdminDetails);
+                {                    
+                    return Ok("Account Updated successfully");
                 }
             }
 
@@ -258,10 +223,7 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.Gender,
                 hallAdmin.FirstName,
                 hallAdmin.LastName,
-                hallAdmin.DateOfBirth,
-                hallAdmin.Mobile,
-                hallAdmin.Address,
-                hallAdmin.State,
+                hallAdmin.DateOfBirth,                
                 hallAdmin.Role,
                 hallAdmin.AccessToken,
                 hallAdmin.RefreshToken,

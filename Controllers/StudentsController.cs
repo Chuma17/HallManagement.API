@@ -71,7 +71,6 @@ namespace HallManagementTest2.Controllers
                     student.StudyLevel,
                     student.Course,
                     student.Department,
-                    student.School,
                     student.HallId,
                     student.RoomId,
                     student.Role
@@ -86,7 +85,7 @@ namespace HallManagementTest2.Controllers
         //Retrieving a single student
         [HttpGet("get-single-student/{studentId:guid}")]
         public async Task<IActionResult> GetStudentAsync([FromRoute] Guid studentId)
-        {            
+        {
             var student = await _studentRepository.GetStudentAsync(studentId);
             if (student == null)
             {
@@ -101,7 +100,7 @@ namespace HallManagementTest2.Controllers
             {
                 student.StudentId,
                 student.UserName,
-                student.FirstName, 
+                student.FirstName,
                 student.LastName,
                 student.Email,
                 student.MatricNo,
@@ -109,16 +108,12 @@ namespace HallManagementTest2.Controllers
                 BlockName = block?.BlockName ?? "empty",
                 RoomNumber = room?.RoomNumber ?? "empty",
                 student.DateOfBirth,
-                student.Gender, 
+                student.Gender,
                 student.ProfileImageUrl,
-                student.Mobile,
                 student.StudyLevel,
-                student.Address,
                 student.Course,
                 student.Department,
-                student.School, 
-                student.State,               
-                student.Role              
+                student.Role
             };
 
             return Ok(studentDetails);
@@ -181,12 +176,13 @@ namespace HallManagementTest2.Controllers
 
             _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-            var student = await _studentRepository.AddStudentAsync(_mapper.Map<Student>(request));
-
+            var student = _mapper.Map<Student>(request);
             student.PasswordHash = passwordHash;
             student.PasswordSalt = passwordSalt;
 
-            await _studentRepository.UpdateStudentPasswordHash(student.StudentId, student);            
+            await _studentRepository.AddStudentAsync(student);
+
+            await _studentRepository.UpdateStudentPasswordHash(student.StudentId, student);
 
             return Ok("Student account created successfully");
         }
@@ -217,11 +213,11 @@ namespace HallManagementTest2.Controllers
                 {
                     await _exitPassRepository.DeleteExitPass(exitPass.ExitPassId);
                 }
-                
+
                 await _studentRepository.DeleteStudentAsync(currentUserIdGuid);
                 return Ok("This Student account has been deleted");
             }
-            
+
             return NotFound();
         }
 
@@ -243,17 +239,6 @@ namespace HallManagementTest2.Controllers
 
                 if (updatedStudent != null)
                 {
-                    var UpdatedStudent = _mapper.Map<Student>(updatedStudent);
-
-                    object updatedStudentDetails = new
-                    {
-                        UpdatedStudent.UserName, UpdatedStudent.Gender, UpdatedStudent.FirstName,
-                        UpdatedStudent.LastName, UpdatedStudent.DateOfBirth, UpdatedStudent.Mobile,
-                        UpdatedStudent.StudyLevel, UpdatedStudent.Address, UpdatedStudent.Course,
-                        UpdatedStudent.Department, UpdatedStudent.School, UpdatedStudent.State,
-                        UpdatedStudent.Role
-                    };
-
                     return Ok("Account Updated successfully");
                 }
             }
@@ -285,7 +270,7 @@ namespace HallManagementTest2.Controllers
             }
 
             var existingStudent = await _studentRepository.GetStudentAsync(currentUserIdGuid);
-            
+
             if (existingStudent.IsBlocked == true)
             {
                 return BadRequest("You cannot select this hall because you have been blocked! Meet the hall admin.");
@@ -368,6 +353,12 @@ namespace HallManagementTest2.Controllers
                 hallId = null;
 
                 hall.StudentCount -= 1;
+
+                var studentDevices = await _studentDeviceRepository.GetStudentDevicesByMatricNo(existingStudent.MatricNo);
+                foreach (var device in studentDevices)
+                {
+                    await _studentDeviceRepository.DeleteStudentDeviceAsync(device.StudentDeviceId);
+                }
 
                 await _studentRepository.JoinHall(hallId, currentUserIdGuid);
                 await _hallRepository.UpdateStudentCount(hallId, hall);
@@ -626,7 +617,7 @@ namespace HallManagementTest2.Controllers
             }
 
             return BadRequest("You are not registered in any room");
-        }       
+        }
 
         //Student login 
         [HttpPost("student-login")]
@@ -638,7 +629,7 @@ namespace HallManagementTest2.Controllers
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, student.PasswordHash, student.PasswordSalt))
                 return BadRequest(new { message = "UserName or password is incorrect" });
-           
+
             string token = _authService.CreateStudentToken(student);
             student.AccessToken = token;
 
@@ -670,8 +661,8 @@ namespace HallManagementTest2.Controllers
                 student.Role,
                 student.Email,
                 student.DateOfBirth,
-                student.AccessToken, 
-                student.RefreshToken, 
+                student.AccessToken,
+                student.RefreshToken,
                 student.ProfileImageUrl
             };
 
@@ -680,7 +671,7 @@ namespace HallManagementTest2.Controllers
 
         [HttpPost("student-refresh-token/{studentId:guid}")]
         public async Task<ActionResult<string>> RefreshToken([FromRoute] Guid studentId)
-        {            
+        {
             var student = await _studentRepository.GetStudentAsync(studentId);
 
             if (student == null)

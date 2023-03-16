@@ -73,10 +73,7 @@ namespace HallManagementTest2.Controllers
                 hall.HallName,
                 porter.DateOfBirth,
                 porter.Gender,
-                porter.ProfileImageUrl,
-                porter.Mobile,
-                porter.Address,
-                porter.State,
+                porter.ProfileImageUrl,                
                 porter.Role,
             };
 
@@ -95,30 +92,15 @@ namespace HallManagementTest2.Controllers
 
             _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-            var porter = await _porterRepository.AddPorterAsync(_mapper.Map<Porter>(request));
+            var porter = _mapper.Map<Porter>(request);
 
             porter.PasswordHash = passwordHash;
             porter.PasswordSalt = passwordSalt;
 
-            await _porterRepository.UpdatePorterPasswordHash(porter.PorterId, porter);
+            await _porterRepository.AddPorterAsync(porter);
+            await _porterRepository.UpdatePorterPasswordHash(porter.PorterId, porter);            
 
-            object porterDetails = new
-            {
-                porter.PorterId,
-                porter.UserName,
-                porter.Gender,
-                porter.FirstName,
-                porter.LastName,
-                porter.DateOfBirth,
-                porter.Mobile,
-                porter.Address,
-                porter.State,
-                porter.Role,
-                porter.AccessToken,
-                porter.ProfileImageUrl
-            };
-
-            return Ok(new { porterDetails });
+            return Ok("Porter added successfully");
         }
 
         //Deleting a porter
@@ -145,22 +127,9 @@ namespace HallManagementTest2.Controllers
 
                 if (updatedPorter != null)
                 {
-                    var UpdatedPorter = _mapper.Map<Porter>(updatedPorter);
+                    var UpdatedPorter = _mapper.Map<Porter>(updatedPorter);                    
 
-                    object updatedPorterDetails = new
-                    {
-                        UpdatedPorter.UserName,
-                        UpdatedPorter.Gender,
-                        UpdatedPorter.FirstName,
-                        UpdatedPorter.LastName,
-                        UpdatedPorter.DateOfBirth,
-                        UpdatedPorter.Mobile,
-                        UpdatedPorter.Address,
-                        UpdatedPorter.State,
-                        UpdatedPorter.Role,
-                    };
-
-                    return Ok(updatedPorterDetails);
+                    return Ok("Account updated successfully");
                 }
             }
 
@@ -195,11 +164,7 @@ namespace HallManagementTest2.Controllers
                 porter.LastName,
                 porter.Email,
                 porter.HallId,
-                porter.DateOfBirth,
-                porter.Mobile,
-                porter.Address,
-                porter.State,
-                porter.Role,
+                porter.DateOfBirth,                
                 porter.AccessToken,
                 porter.RefreshToken,
                 porter.ProfileImageUrl

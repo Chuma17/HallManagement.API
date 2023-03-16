@@ -7,7 +7,7 @@ namespace HallManagementTest2.Models
         [Key]
         public Guid HallTypeId { get; set; }
         public string? Description { get; set; }
-        public int HallCount { get; set; }
+        public int HallCount { get; set; } = 0;
         public int RoomSpaceCount { get; set; }
 
         public IEnumerable<Hall>? Halls { get; set; }

@@ -143,14 +143,8 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 existingStudent.FirstName = request.FirstName;
                 existingStudent.LastName = request.LastName;
-                existingStudent.Email = request.Email;
-                existingStudent.DateOfBirth = request.DateOfBirth;
-                existingStudent.Mobile = request.Mobile;
                 existingStudent.Gender = request.Gender;
-                existingStudent.Address = request.Address;
-                existingStudent.School = request.School;
                 existingStudent.Course = request.Course;
-                existingStudent.State = request.State;
                 existingStudent.Department = request.Department;                
                 existingStudent.UserName = request.UserName;
                 existingStudent.StudyLevel = request.StudyLevel;

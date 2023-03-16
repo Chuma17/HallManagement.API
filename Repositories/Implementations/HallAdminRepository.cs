@@ -45,13 +45,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return hallAdmin;
         }
 
-        public async Task<List<HallAdmin>> GetHallAdminsByGender(string gender)
+        public async Task<List<HallAdmin>> GetUnassignedHallAdmins(string gender)
         {
             var hallAdmins = await GetHallAdmins();
             var filteredHallAdmins = new List<HallAdmin>();
             foreach (var hallAdmin in filteredHallAdmins)
             {
-                if (hallAdmin.Gender == gender)
+                if (hallAdmin.Gender == gender && hallAdmin.HallId != Guid.Empty)
                 {
                     filteredHallAdmins.Add(hallAdmin);
                 }
@@ -95,10 +95,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingHallAdmin.LastName = request.LastName;
                 existingHallAdmin.Email = request.Email;
                 existingHallAdmin.DateOfBirth = request.DateOfBirth;
-                existingHallAdmin.Mobile = request.Mobile;
                 existingHallAdmin.Gender = request.Gender;
-                existingHallAdmin.Address = request.Address;
-                existingHallAdmin.State = request.State;
                 existingHallAdmin.UserName = request.UserName;
 
                 await _context.SaveChangesAsync();
