@@ -105,6 +105,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Halls.Include(s => s.Students).FirstOrDefaultAsync(x => x.HallId == hallId);
         }
 
+        public async Task<List<Hall>> GetAssignedHalls(string gender)
+        {
+            var halls = await GetHallsByGender(gender);
+            var filteredHalls = new List<Hall>();
+            foreach (var hall in halls)
+            {
+                if (hall.IsAssigned)
+                {
+                    filteredHalls.Add(hall);
+                }
+            }
+            return filteredHalls;
+        }
+
         public async Task<List<Hall>> GetUnassignedHalls(string gender)
         {
             var halls = await GetHallsByGender(gender);
@@ -186,6 +200,7 @@ namespace HallManagementTest2.Repositories.Implementations
             }
             return null;
         }
+
         
     }
 }

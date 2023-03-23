@@ -8,6 +8,7 @@ using HallManagementTest2.Requests.Update;
 using HallManagementTest2.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HallManagementTest2.Controllers
 {
@@ -42,12 +43,36 @@ namespace HallManagementTest2.Controllers
         }
 
         //Retrieving all the porters
-        [HttpGet("get-all-Porters")]
+        [HttpGet("get-Porters-by-gender"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<IActionResult> GetAllPorters()
         {
-            var porters = await _porterRepository.GetPorters();
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
 
-            return Ok(porters);
+            var porters = await _porterRepository.GetPortersByGender(currentUserGender);
+
+            var portersArray = new List<object>();
+
+            foreach (var porter in porters)
+            {
+                var hall = await _hallRepository.GetHallAsync(porter.HallId);
+                if (hall == null)
+                {
+                    hall.HallName = "Empty";
+                }
+
+                var portersList = new
+                {
+                    porter.PorterId,
+                    porter.FirstName,
+                    porter.LastName,
+                    porter.Email,
+                    hall.HallName
+                };
+
+                portersArray.Add(portersList);
+            }
+
+            return Ok(portersArray.ToArray());
         }
 
         //Retrieving a single porter
@@ -71,7 +96,6 @@ namespace HallManagementTest2.Controllers
                 porter.LastName,
                 porter.Email,
                 hall.HallName,
-                porter.DateOfBirth,
                 porter.Gender,
                 porter.ProfileImageUrl,                
                 porter.Role,
@@ -82,12 +106,20 @@ namespace HallManagementTest2.Controllers
 
         
         //Adding a porter
-        [HttpPost("Porter-registration")]
+        [HttpPost("Porter-registration"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<ActionResult<Porter>> AddPorter([FromBody] AddPorterRequest request)
         {
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
+
             if (request == null)
             {
                 return BadRequest();
+            }
+
+            var hallExists = await _hallRepository.Exists(request.HallId);
+            if (!hallExists)
+            {
+                return BadRequest("The specified hall ID is invalid.");
             }
 
             _authService.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
@@ -96,6 +128,7 @@ namespace HallManagementTest2.Controllers
 
             porter.PasswordHash = passwordHash;
             porter.PasswordSalt = passwordSalt;
+            porter.Gender = currentUserGender;
 
             await _porterRepository.AddPorterAsync(porter);
             await _porterRepository.UpdatePorterPasswordHash(porter.PorterId, porter);            
@@ -164,7 +197,7 @@ namespace HallManagementTest2.Controllers
                 porter.LastName,
                 porter.Email,
                 porter.HallId,
-                porter.DateOfBirth,                
+                porter.Role,
                 porter.AccessToken,
                 porter.RefreshToken,
                 porter.ProfileImageUrl

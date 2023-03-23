@@ -4,6 +4,7 @@ using HallManagementTest2.Models;
 using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,27 +17,28 @@ namespace HallManagementTest2.Controllers
         private readonly IBlockRepository _blockRepository;
         private readonly IMapper _mapper;
         private readonly IHallRepository _hallRepository;
+        private readonly IRoomRepository _roomRepository;
 
         public BlockController(IBlockRepository blockRepository, IMapper mapper,
-                                IHallRepository hallRepository)
+                                IHallRepository hallRepository, IRoomRepository roomRepository)
         {
             _blockRepository = blockRepository;
             _mapper = mapper;
             _hallRepository = hallRepository;
+            _roomRepository = roomRepository;
         }
 
         //Retrieving a rooms in a block
         [HttpGet("get-rooms-in-block/{blockId:guid}")]
         public async Task<IActionResult> GetRoomsInBlockAsync([FromRoute] Guid blockId)
-        {
-            var block = await _blockRepository.GetBlockAsync(blockId);
-
-            if (block == null)
+        {           
+            var roomsInBlock = await _roomRepository.GetRoomsInBlockAsync(blockId, "RoomNumber");
+            if (roomsInBlock == null)
             {
                 return NotFound();
             }
 
-            return Ok(block.Rooms);
+            return Ok(roomsInBlock);
         }
         
         //Retrieving a single block
@@ -54,7 +56,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Add block
-        [HttpPost("add-block")]
+        [HttpPost("add-block"), Authorize(Roles = "HallAdmin")]
         public async Task<ActionResult<Block>> AddBlock([FromBody] AddBlockRequest request)
         {
             var hallExists = await _hallRepository.Exists(request.HallId);
@@ -83,7 +85,7 @@ namespace HallManagementTest2.Controllers
             await _blockRepository.UpdateBlockRoomCount(block.BlockId, block);
             await _hallRepository.UpdateBlockCount(request.HallId, hall);
 
-            return Ok(block);
+            return Ok("Block Added Successfully");
         }        
     }
 }

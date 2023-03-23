@@ -50,17 +50,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return await rooms;
         }
 
-        public async Task<List<Room>> GetRoomsInBlockAsync(Guid blockId)
+        public async Task<List<Room>> GetRoomsInBlockAsync(Guid blockId, string orderBy)
         {
             var rooms = await GetRoomsAsync();
-            var roomsInBlock = new List<Room>();
-            foreach (var room in rooms)
+            var roomsInBlock = rooms.Where(room => room.BlockId == blockId).ToList();
+
+            switch (orderBy)
             {
-                if (room.BlockId == blockId)
-                {
-                    roomsInBlock.Add(room);
-                }
+                case "RoomNumber":
+                    roomsInBlock = roomsInBlock.OrderBy(room => room.RoomNumber).ToList();
+                    break;
+                default:
+                    break;
             }
+
             return roomsInBlock;
         }
 

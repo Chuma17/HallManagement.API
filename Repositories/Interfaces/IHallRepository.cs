@@ -15,6 +15,7 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Hall> GetHallAsync(Guid? hallId);
         Task<List<Hall>> GetHallsByGender(string gender);
         Task<List<Hall>> GetUnassignedHalls(string gender);
+        Task<List<Hall>> GetAssignedHalls(string gender);
         Task<Hall> DeleteHallAsync(Guid hallId);
         Task<Hall> GetStudentsInHallAsync(Guid hallId);
         Task<Hall> GetPortersInHallAsync(Guid hallId);

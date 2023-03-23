@@ -62,6 +62,20 @@ namespace HallManagementTest2.Repositories.Implementations
 
             return porter;
         }
+        
+        public async Task<List<Porter>> GetPortersByGender(string gender)
+        {
+            var porters = await GetPorters();
+            var filteredPorters = new List<Porter>();
+            foreach (var porter in porters)
+            {
+                if (porter.Gender == gender)
+                {
+                    filteredPorters.Add(porter);
+                }
+            }
+            return filteredPorters;
+        }
 
         public async Task<List<Porter>> GetPortersInHall(Guid hallId)
         {
@@ -85,7 +99,6 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingPorter.FirstName = request.FirstName;
                 existingPorter.LastName = request.LastName;
                 existingPorter.Email = request.Email;
-                existingPorter.DateOfBirth = request.DateOfBirth;
                 existingPorter.Gender = request.Gender;
                 existingPorter.UserName = request.UserName;
 

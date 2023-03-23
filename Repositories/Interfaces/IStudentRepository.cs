@@ -12,6 +12,7 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Student> GetStudentByMatricNo(string matricNo);
         Task<bool> Exists(Guid studentId);
         Task<Student> UpdateStudent(Guid studentId, Student request);
+        Task<Student> UpdateStudentStatus(Guid studentId, Student request);
         Task<Student> UpdateStudentPasswordHash(Guid studentId, Student request);
         Task<Student> UpdateStudentToken(string userName, Student request);
         Task<Student> DeleteStudentAsync(Guid studentId);

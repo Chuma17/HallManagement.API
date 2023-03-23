@@ -7,6 +7,8 @@ using HallManagementTest2.Requests.Add;
 using HallManagementTest2.Requests.Update;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Repositories.Implementations;
+using Microsoft.AspNetCore.Authorization;
+using System.Data;
 
 namespace HallManagementTest2.Controllers
 {
@@ -63,7 +65,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Add room
-        [HttpPost("add-room")]
+        [HttpPost("add-room"), Authorize(Roles = "HallAdmin")]
         public async Task<ActionResult<Room>> AddRoom([FromBody] AddRoomRequest request)
         {
             var hallExists = await _hallRepository.Exists(request.HallId);
@@ -103,7 +105,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Delete room
-        [HttpDelete("delete-room/{roomId:guid}")]
+        [HttpDelete("delete-room/{roomId:guid}"), Authorize(Roles = "HallAdmin")]
         public async Task<IActionResult> DeleteRoomAsync([FromRoute] Guid roomId)
         {
             if (await _roomRepository.Exists(roomId))
@@ -147,7 +149,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Updating room status
-        [HttpPut("update-room-status/{roomId:guid}")]
+        [HttpPut("update-room-status/{roomId:guid}"), Authorize(Roles = "HallAdmin")]
         public async Task<IActionResult> UpdateRoomStatus([FromRoute] Guid roomId)
         {
             if (await _roomRepository.Exists(roomId))

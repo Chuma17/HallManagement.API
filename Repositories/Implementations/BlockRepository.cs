@@ -50,17 +50,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return blocks;
         }
 
-        public async Task<List<Block>> GetBlocksInHall(Guid hallId)
+        public async Task<List<Block>> GetBlocksInHall(Guid hallId, string orderBy)
         {
             var blocks = await GetBlocksAsync();
-            var blocksInHall = new List<Block>();
-            foreach (var block in blocks)
+            var blocksInHall = blocks.Where(block => block.HallId == hallId).ToList();
+
+            switch (orderBy)
             {
-                if (block.HallId == hallId)
-                {
-                    blocksInHall.Add(block);
-                }
+                case "BlockName":
+                    blocksInHall = blocksInHall.OrderBy(block => block.BlockName).ToList();
+                    break;
+                default:
+                    break;
             }
+            
             return blocksInHall;
         }
 

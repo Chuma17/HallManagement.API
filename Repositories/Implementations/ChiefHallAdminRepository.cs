@@ -70,7 +70,6 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingchiefHallAdmin.FirstName = request.FirstName;
                 existingchiefHallAdmin.LastName = request.LastName;
                 existingchiefHallAdmin.Email = request.Email;
-                existingchiefHallAdmin.DateOfBirth = request.DateOfBirth;
                 existingchiefHallAdmin.Gender = request.Gender;
                 existingchiefHallAdmin.UserName = request.UserName;
 

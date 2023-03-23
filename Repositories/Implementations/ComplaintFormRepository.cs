@@ -45,6 +45,20 @@ namespace HallManagementTest2.Repositories.Implementations
             return complaintForms;
         }
 
+        public async Task<List<ComplaintForm>> GetComplaintFormsInBlock(Guid blockId)
+        {
+            var complaintForms = await GetComplaintFormsAsync();
+            var complaintsInBlock = new List<ComplaintForm>();
+            foreach (var complaint in complaintForms)
+            {
+                if (complaint.BlockId == blockId)
+                {
+                    complaintsInBlock.Add(complaint);
+                }
+            }
+            return complaintsInBlock;
+        }
+
         public async Task<List<ComplaintForm>> GetComplaintFormsInHall(Guid hallId)
         {
             var complaintForms = await GetComplaintFormsAsync();
@@ -57,6 +71,20 @@ namespace HallManagementTest2.Repositories.Implementations
                 }
             }
             return complaintsInHall;
+        }
+
+        public async Task<List<ComplaintForm>> GetComplaintFormsInRoom(Guid roomId)
+        {
+            var complaintForms = await GetComplaintFormsAsync();
+            var complaintsInRoom = new List<ComplaintForm>();
+            foreach (var complaint in complaintForms)
+            {
+                if (complaint.RoomId == roomId)
+                {
+                    complaintsInRoom.Add(complaint);
+                }
+            }
+            return complaintsInRoom;
         }
 
         public async Task<ComplaintForm> UpdateComplaintForm(Guid complaintFormId, ComplaintForm request)

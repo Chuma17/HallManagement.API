@@ -67,7 +67,6 @@ namespace HallManagementTest2.Controllers
                 chiefHallAdmin.FirstName,
                 chiefHallAdmin.LastName,
                 chiefHallAdmin.Email,
-                chiefHallAdmin.DateOfBirth,
                 chiefHallAdmin.Gender,
                 chiefHallAdmin.ProfileImageUrl,
                 chiefHallAdmin.Role,
@@ -77,7 +76,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Adding a chief hall admin
-        [HttpPost("chiefHallAdmin-registration"), AllowAnonymous]
+        [HttpPost("chiefHallAdmin-registration")]
         public async Task<ActionResult<ChiefHallAdmin>> AddChiefHallAdmin([FromBody] AddChiefHallAdminRequest request)
         {
             if (request == null)
@@ -156,7 +155,6 @@ namespace HallManagementTest2.Controllers
                 chiefHallAdmin.Gender,
                 chiefHallAdmin.FirstName, 
                 chiefHallAdmin.LastName, 
-                chiefHallAdmin.DateOfBirth,
                 chiefHallAdmin.Role, 
                 chiefHallAdmin.AccessToken, 
                 chiefHallAdmin.RefreshToken,

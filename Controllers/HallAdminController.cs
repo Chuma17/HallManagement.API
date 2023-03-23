@@ -42,12 +42,36 @@ namespace HallManagementTest2.Controllers
         }
 
         //Retrieving all the hall admins
-        [HttpGet("get-all-HallAdmins")]
+        [HttpGet("get-HallAdmins-by-gender"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<IActionResult> GetAllHallAdmins()
         {
-            var hallAdmins = await _hallAdminRepository.GetHallAdmins();
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
 
-            return Ok(hallAdmins);
+            var hallAdmins = await _hallAdminRepository.GetHallAdminsByGender(currentUserGender);
+            
+            var hallAdminsArray = new List<object>();
+
+            foreach (var hallAdmin in hallAdmins)
+            {
+                var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
+                if (hall == null)
+                {
+                    hall.HallName = "Empty";
+                }
+
+                var hallAdminsList = new
+                {
+                    hallAdmin.HallAdminId,
+                    hallAdmin.FirstName,
+                    hallAdmin.LastName,   
+                    hallAdmin.Email,
+                    hall.HallName
+                };
+
+                hallAdminsArray.Add(hallAdminsList);
+            }
+
+            return Ok(hallAdminsArray.ToArray());
         }
 
         //Retrieving a single hall admin
@@ -67,7 +91,7 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.UserName,
                 hallAdmin.FirstName,
                 hallAdmin.LastName,
-                hallAdmin.DateOfBirth,
+                hallAdmin.Email,
                 hallAdmin.Gender,
                 hallAdmin.ProfileImageUrl,                
                 hallAdmin.Role,
@@ -76,6 +100,7 @@ namespace HallManagementTest2.Controllers
             return Ok(hallAdminDetails);
         }
 
+        //Get hall admin by hal
         [HttpGet("get-HallAdmin-by-hall/{hallId:guid}")]
         public async Task<IActionResult> GetHallAdminByHallAsync([FromRoute] Guid hallId)
         {
@@ -99,33 +124,20 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.LastName,
                 hallAdmin.Email,
                 hall.HallName,
-                hallAdmin.DateOfBirth,
                 hallAdmin.Gender,
                 hallAdmin.ProfileImageUrl,                
                 hallAdmin.Role,
             };
 
             return Ok(hallAdminDetails);
-        }
-
-        [HttpGet("get-unassigned-HallAdmins")]
-        public async Task<IActionResult> GetHallAdminByGenderAsync()
-        {
-            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
-            var hallAdmins = await _hallAdminRepository.GetUnassignedHallAdmins(currentUserGender);
-
-            if (hallAdmins == null)
-            {
-                return NotFound();
-            }            
-
-            return Ok(hallAdmins);
-        }
+        }        
 
         //Adding a hall admin
-        [HttpPost("HallAdmin-registration")]
+        [HttpPost("HallAdmin-registration"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<ActionResult<HallAdmin>> AddHallAdmin([FromBody] AddHallAdminRequest request)
         {
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
+
             if (request == null)
             {
                 return BadRequest();
@@ -146,6 +158,7 @@ namespace HallManagementTest2.Controllers
 
             hallAdmin.PasswordHash = passwordHash;
             hallAdmin.PasswordSalt = passwordSalt;
+            hallAdmin.Gender = currentUserGender;
 
             await _hallAdminRepository.AddHallAdminAsync(hallAdmin);
             await _hallAdminRepository.UpdateHallAdminPasswordHash(hallAdmin.HallAdminId, hallAdmin);
@@ -155,7 +168,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Deleting a hall admin
-        [HttpDelete("delete-HallAdmin/{hallAdminId:guid}")]
+        [HttpDelete("delete-HallAdmin/{hallAdminId:guid}"), Authorize(Roles = "ChiefHallAdmin")]
         public async Task<IActionResult> DeleteHallAdminAsync([FromRoute] Guid hallAdminId)
         {
             if (await _hallAdminRepository.Exists(hallAdminId))
@@ -216,6 +229,8 @@ namespace HallManagementTest2.Controllers
 
             await _hallAdminRepository.UpdateHallAdminToken(hallAdmin.UserName, hallAdmin);
 
+            var hall = await _hallRepository.GetHallAsync(hallAdmin.HallId);
+
             object hallAdminDetails = new
             {
                 hallAdmin.HallAdminId,
@@ -223,7 +238,8 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.Gender,
                 hallAdmin.FirstName,
                 hallAdmin.LastName,
-                hallAdmin.DateOfBirth,                
+                HallName = hall?.HallName ?? "empty",
+                hallAdmin.HallId,
                 hallAdmin.Role,
                 hallAdmin.AccessToken,
                 hallAdmin.RefreshToken,

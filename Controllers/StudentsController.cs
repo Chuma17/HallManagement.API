@@ -107,7 +107,6 @@ namespace HallManagementTest2.Controllers
                 HallName = hall?.HallName ?? "empty",
                 BlockName = block?.BlockName ?? "empty",
                 RoomNumber = room?.RoomNumber ?? "empty",
-                student.DateOfBirth,
                 student.Gender,
                 student.ProfileImageUrl,
                 student.StudyLevel,
@@ -240,6 +239,49 @@ namespace HallManagementTest2.Controllers
                 if (updatedStudent != null)
                 {
                     return Ok("Account Updated successfully");
+                }
+            }
+
+            return NotFound();
+        }
+        
+        //Updating a student Status
+        [HttpPut("update-student-status/{studentId:guid}"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> UpdateStudentStatus([FromRoute] Guid studentId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            if (await _studentRepository.Exists(studentId))
+            {                
+                var student = await _studentRepository.GetStudentAsync(studentId);
+                if (student.IsBlocked)
+                {
+                    student.IsBlocked = false;
+                    return Ok("Student has beed unblocked");
+                }
+                else
+                {
+                    student.IsBlocked = true;
+                    if (student.RoomId != Guid.Empty)
+                    {
+                        await LeaveRoom();
+                    }
+
+                    else if (student.BlockId != Guid.Empty)
+                    {
+                        await LeaveBlock();
+                    }
+
+                    else if (student.HallId != Guid.Empty)
+                    {
+                        await LeaveHall();
+                    }
+
+                    return Ok("Student has been blocked successfully");
                 }
             }
 
@@ -660,7 +702,6 @@ namespace HallManagementTest2.Controllers
                 student.Department,
                 student.Role,
                 student.Email,
-                student.DateOfBirth,
                 student.AccessToken,
                 student.RefreshToken,
                 student.ProfileImageUrl

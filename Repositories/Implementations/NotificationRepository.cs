@@ -45,16 +45,18 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Notifications.FirstOrDefaultAsync(x => x.NotiFicationId == notificationId);
         }
 
-        public async Task<List<Notification>> GetNotificationInHall(Guid hallId)
+        public async Task<List<Notification>> GetNotificationInHall(Guid hallId, string orderBy)
         {
             var notifications = await GetAllNotifications();
-            var notificationsInHall = new List<Notification>();
-            foreach (var notification in notifications)
+            var notificationsInHall = notifications.Where(notification => notification.HallId == hallId).ToList();
+
+            switch (orderBy)
             {
-                if (notification.HallId == hallId)
-                {
-                    notificationsInHall.Add(notification);
-                }
+                case "DateCreated":
+                    notificationsInHall = notificationsInHall.OrderByDescending(notification => notification.DateCreated).ToList();
+                    break;
+                default:
+                    break;
             }
             return notificationsInHall;
         }

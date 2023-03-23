@@ -184,6 +184,18 @@ namespace HallManagementTest2.Repositories.Implementations
             }
             return null;
         }
-        
+
+        public async Task<Student> UpdateStudentStatus(Guid studentId, Student request)
+        {
+            var existingStudent = await GetStudentAsync(studentId);
+            if (existingStudent != null)
+            {
+                existingStudent.IsBlocked = request.IsBlocked;
+
+                await _context.SaveChangesAsync();
+                return existingStudent;
+            }
+            return null;
+        }
     }
 }

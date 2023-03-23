@@ -9,7 +9,6 @@ namespace HallManagementTest2.Requests.Add
         public string? Email { get; set; }
         public string Password { get; set; } = string.Empty;
         public string MatricNo { get; set; }
-        public DateTime? DateOfBirth { get; set; }
         public string? ProfileImageUrl { get; set; }
         public string? Gender { get; set; }
         public string UserName { get; set; } = string.Empty;

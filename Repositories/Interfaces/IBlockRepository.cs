@@ -11,6 +11,6 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Block> GetSingleBlockAsync(Guid blockId);
         Task<Block> DeleteBlockAsync(Guid blockId);
         Task<List<Block>> GetBlocksAsync();
-        Task<List<Block>> GetBlocksInHall(Guid hallId);
+        Task<List<Block>> GetBlocksInHall(Guid hallId, string orderBy);
     }
 }

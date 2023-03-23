@@ -11,5 +11,7 @@
 
 
         public Guid HallId { get; set; }
+        public Guid BlockId { get; set; }
+        public Guid RoomId { get; set; }
     }
 }

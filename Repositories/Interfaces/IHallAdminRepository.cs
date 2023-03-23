@@ -4,8 +4,7 @@ namespace HallManagementTest2.Repositories.Interfaces
 {
     public interface IHallAdminRepository
     {
-        Task<List<HallAdmin>> GetHallAdmins();
-        Task<List<HallAdmin>> GetUnassignedHallAdmins(string gender);
+        Task<List<HallAdmin>> GetHallAdminsByGender(string gender);
         Task<HallAdmin> GetHallAdmin(Guid hallAdminId);
         Task<HallAdmin> GetHallAdminByUserName(string userName);
         Task<HallAdmin> GetHallAdminByHall(Guid hallId);

@@ -45,20 +45,6 @@ namespace HallManagementTest2.Repositories.Implementations
             return hallAdmin;
         }
 
-        public async Task<List<HallAdmin>> GetUnassignedHallAdmins(string gender)
-        {
-            var hallAdmins = await GetHallAdmins();
-            var filteredHallAdmins = new List<HallAdmin>();
-            foreach (var hallAdmin in filteredHallAdmins)
-            {
-                if (hallAdmin.Gender == gender && hallAdmin.HallId != Guid.Empty)
-                {
-                    filteredHallAdmins.Add(hallAdmin);
-                }
-            }
-            return filteredHallAdmins;
-        }
-
         public async Task<HallAdmin> GetHallAdminByHall(Guid hallId)
         {
             var hallAdmin = await _context.HallAdmins.FirstOrDefaultAsync(x => x.HallId == hallId);
@@ -79,11 +65,18 @@ namespace HallManagementTest2.Repositories.Implementations
             return null;
         }
 
-        public async Task<List<HallAdmin>> GetHallAdmins()
+        public async Task<List<HallAdmin>> GetHallAdminsByGender(string gender)
         {
             var hallAdmins = await _context.HallAdmins.ToListAsync();
-
-            return hallAdmins;
+            var filteredHallAdmins = new List<HallAdmin>();
+            foreach (var hallAdmin in hallAdmins)
+            {
+                if (hallAdmin.Gender == gender)
+                {
+                    filteredHallAdmins.Add(hallAdmin);
+                }
+            }
+            return filteredHallAdmins;
         }
 
         public async Task<HallAdmin> UpdateHallAdmin(Guid hallAdminId, HallAdmin request)
@@ -94,7 +87,6 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingHallAdmin.FirstName = request.FirstName;
                 existingHallAdmin.LastName = request.LastName;
                 existingHallAdmin.Email = request.Email;
-                existingHallAdmin.DateOfBirth = request.DateOfBirth;
                 existingHallAdmin.Gender = request.Gender;
                 existingHallAdmin.UserName = request.UserName;
 
