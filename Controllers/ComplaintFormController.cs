@@ -111,5 +111,20 @@ namespace HallManagementTest2.Controllers
 
             return Ok(complaints);
         }
+
+        //Get Complaints in hall
+        [HttpGet("get-complaints-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> GetComplaintsInHall([FromRoute] Guid hallId)
+        {
+            var room = await _hallRepository.GetHallAsync(hallId);
+            if (room == null)
+            {
+                return BadRequest("Hall does not exist");
+            }
+
+            var complaints = await _complaintFormRepository.GetComplaintFormsInHall(hallId);
+
+            return Ok(complaints);
+        }
     }
 }

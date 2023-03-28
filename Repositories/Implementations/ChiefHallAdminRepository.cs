@@ -69,9 +69,7 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 existingchiefHallAdmin.FirstName = request.FirstName;
                 existingchiefHallAdmin.LastName = request.LastName;
-                existingchiefHallAdmin.Email = request.Email;
-                existingchiefHallAdmin.Gender = request.Gender;
-                existingchiefHallAdmin.UserName = request.UserName;
+                existingchiefHallAdmin.Email = request.Email;                
 
                 await _context.SaveChangesAsync();
                 return existingchiefHallAdmin;

@@ -50,19 +50,12 @@ namespace HallManagementTest2.Repositories.Implementations
             return await rooms;
         }
 
-        public async Task<List<Room>> GetRoomsInBlockAsync(Guid blockId, string orderBy)
+        public async Task<List<Room>> GetRoomsInBlockAsync(Guid blockId)
         {
             var rooms = await GetRoomsAsync();
             var roomsInBlock = rooms.Where(room => room.BlockId == blockId).ToList();
 
-            switch (orderBy)
-            {
-                case "RoomNumber":
-                    roomsInBlock = roomsInBlock.OrderBy(room => room.RoomNumber).ToList();
-                    break;
-                default:
-                    break;
-            }
+            roomsInBlock = roomsInBlock.OrderBy(room => room.DateCreated).ToList();
 
             return roomsInBlock;
         }
@@ -70,14 +63,9 @@ namespace HallManagementTest2.Repositories.Implementations
         public async Task<List<Room>> GetRoomsInHall(Guid hallId)
         {
             var rooms = await GetRoomsAsync();
-            var roomsInHall = new List<Room>();
-            foreach (var room in rooms)
-            {
-                if (room.HallId == hallId)
-                {
-                    roomsInHall.Add(room);
-                }
-            }
+            var roomsInHall = rooms.Where(room => room.HallId == hallId).ToList();
+
+            roomsInHall = roomsInHall.OrderBy(room => room.DateCreated).ToList();
             return roomsInHall;
         }
 
@@ -99,7 +87,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 return existingRoom;
             }
             return null;
-        }        
+        }
 
         public async Task<Room> UpdateRoomCount(Guid roomId, Room request)
         {

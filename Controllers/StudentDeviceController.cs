@@ -8,6 +8,7 @@ using HallManagementTest2.Models;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using HallManagementTest2.Requests;
 
 namespace HallManagementTest2.Controllers
 {
@@ -74,9 +75,9 @@ namespace HallManagementTest2.Controllers
 
         //Get StudentDevices by matric no
         [HttpPost("get-studentDevices-by-matricNo"), Authorize(Roles = "Porter,HallAdmin")]
-        public async Task<IActionResult> GetStudentDeviceByMatricNo([FromBody] string matricNo)
+        public async Task<IActionResult> GetStudentDeviceByMatricNo([FromBody] StudentDeviceRequest request)
         {
-            var studentDevices = await _studentDeviceRepository.GetStudentDevicesByMatricNo(matricNo);
+            var studentDevices = await _studentDeviceRepository.GetStudentDevicesByMatricNo(request.MatricNo);
 
             if (studentDevices == null)
             {

@@ -8,6 +8,7 @@ using HallManagementTest2.Requests.Update;
 using HallManagementTest2.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace HallManagementTest2.Controllers
 {
@@ -112,13 +113,19 @@ namespace HallManagementTest2.Controllers
         }
 
         //Updating a chief hall admin Record
-        [HttpPut("update-chiefHallAdmin/{chiefHallAdminId:guid}")]
-        public async Task<IActionResult> UpdateChiefHallAdminAsync([FromRoute] Guid chiefHallAdminId, [FromBody] UpdateChiefHallAdminRequest request)
+        [HttpPut("update-chiefHallAdmin")]
+        public async Task<IActionResult> UpdateChiefHallAdminAsync([FromBody] UpdateChiefHallAdminRequest request)
         {
-            if (await _chiefHallAdminRepository.Exists(chiefHallAdminId))
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            if (await _chiefHallAdminRepository.Exists(currentUserIdGuid))
             {
                 //Update Details
-                var updatedChiefHallAdmin = await _chiefHallAdminRepository.UpdateChiefHallAdmin(chiefHallAdminId, _mapper.Map<ChiefHallAdmin>(request));
+                var updatedChiefHallAdmin = await _chiefHallAdminRepository.UpdateChiefHallAdmin(currentUserIdGuid, _mapper.Map<ChiefHallAdmin>(request));
 
                 if (updatedChiefHallAdmin != null)
                 {                    
@@ -135,10 +142,10 @@ namespace HallManagementTest2.Controllers
         {
             var chiefHallAdmin = await _chiefHallAdminRepository.GetChiefHallAdminByUserName(loginRequest.UserName);
             if (chiefHallAdmin == null)
-                return BadRequest(new { message = "Email or password is incorrect" });
+                return BadRequest(new { message = "Username is incorrect" });
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, chiefHallAdmin.PasswordHash, chiefHallAdmin.PasswordSalt))
-                return BadRequest(new { message = "UserName or password is incorrect" });
+                return BadRequest(new { message = "Password is incorrect" });
 
             string token = _authService.CreateChiefHallAdminToken(chiefHallAdmin);
             chiefHallAdmin.AccessToken = token;

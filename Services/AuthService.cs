@@ -68,6 +68,7 @@ namespace HallManagementTest2.Services
         {
             List<Claim> claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, chiefHallAdmin.ChiefHallAdminId.ToString()),
                 new Claim(ClaimTypes.Gender, chiefHallAdmin.Gender),
                 new Claim(ClaimTypes.Role, chiefHallAdmin.Role)
             };

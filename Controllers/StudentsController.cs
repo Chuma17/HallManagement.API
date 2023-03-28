@@ -667,10 +667,10 @@ namespace HallManagementTest2.Controllers
         {
             var student = await _studentRepository.GetStudentByMatricNo(loginRequest.MatricNo);
             if (student == null)
-                return BadRequest(new { message = "Email or password is incorrect" });
+                return BadRequest(new { message = "Matric No is incorrect" });
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, student.PasswordHash, student.PasswordSalt))
-                return BadRequest(new { message = "UserName or password is incorrect" });
+                return BadRequest(new { message = "Password is incorrect" });
 
             string token = _authService.CreateStudentToken(student);
             student.AccessToken = token;

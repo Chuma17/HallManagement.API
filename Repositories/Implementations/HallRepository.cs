@@ -38,22 +38,7 @@ namespace HallManagementTest2.Repositories.Implementations
         public async Task<bool> Exists(Guid hallId)
         {
             return await _context.Halls.AnyAsync(x => x.HallId == hallId);
-        }
-
-        public async Task<Hall> GetBlocksInHallAsync(Guid hallId)
-        {
-            return await _context.Halls.Include(s => s.Blocks).FirstOrDefaultAsync(x => x.HallId == hallId);
-        }
-
-        public async Task<Hall> GetComplaintFormsInHallAsync(Guid hallId)
-        {
-            return await _context.Halls.Include(s => s.ComplaintForms).FirstOrDefaultAsync(x => x.HallId == hallId);
-        }
-
-        public async Task<Hall> GetExitPassesInHallAsync(Guid hallId)
-        {
-            return await _context.Halls.Include(s => s.ExitPasses).FirstOrDefaultAsync(x => x.HallId == hallId);
-        }
+        }                        
 
         public async Task<Hall> GetHallAsync(Guid? hallId)
         {
@@ -79,21 +64,13 @@ namespace HallManagementTest2.Repositories.Implementations
             var hall = _context.Halls.ToListAsync();
             return await hall;
         }
-
-        public async Task<Hall> GetNotificationInHallAsync(Guid hallId)
-        {
-            return await _context.Halls.Include(s => s.Notifications).FirstOrDefaultAsync(x => x.HallId == hallId);
-        }
+        
 
         public async Task<Hall> GetPortersInHallAsync(Guid hallId)
         {
             return await _context.Halls.Include(s => s.Porters).FirstOrDefaultAsync(x => x.HallId == hallId);
         }
-
-        public async Task<Hall> GetRoomsInHallAsync(Guid hallId)
-        {
-            return await _context.Halls.Include(s => s.Rooms).FirstOrDefaultAsync(x => x.HallId == hallId);
-        }
+       
 
         public async Task<Hall> GetStudentDevicesInHallAsync(Guid hallId)
         {
@@ -105,31 +82,27 @@ namespace HallManagementTest2.Repositories.Implementations
             return await _context.Halls.Include(s => s.Students).FirstOrDefaultAsync(x => x.HallId == hallId);
         }
 
-        public async Task<List<Hall>> GetAssignedHalls(string gender)
+        public async Task<List<Hall>> GetAssignedHalls(string gender, Guid hallTypeId)
         {
             var halls = await GetHallsByGender(gender);
-            var filteredHalls = new List<Hall>();
-            foreach (var hall in halls)
-            {
-                if (hall.IsAssigned)
-                {
-                    filteredHalls.Add(hall);
-                }
-            }
+            var filteredHalls = halls.Where(x => x.IsAssigned && x.HallTypeId == hallTypeId).ToList();    
+            
+            return filteredHalls;
+        }
+
+        public async Task<List<Hall>> GetAssignedHallsForPorters(string gender)
+        {
+            var halls = await GetHallsByGender(gender);
+            var filteredHalls = halls.Where(x => x.IsAssigned).ToList();
+
             return filteredHalls;
         }
 
         public async Task<List<Hall>> GetUnassignedHalls(string gender)
         {
             var halls = await GetHallsByGender(gender);
-            var filteredHalls = new List<Hall>();
-            foreach (var hall in halls)
-            {
-                if (!hall.IsAssigned)
-                {
-                    filteredHalls.Add(hall);
-                }
-            }
+            var filteredHalls = halls.Where(x => !x.IsAssigned).ToList();
+            
             return filteredHalls;
         }
 
@@ -199,8 +172,6 @@ namespace HallManagementTest2.Repositories.Implementations
                 return existingHall;
             }
             return null;
-        }
-
-        
+        }        
     }
 }

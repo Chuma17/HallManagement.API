@@ -47,44 +47,32 @@ namespace HallManagementTest2.Repositories.Implementations
 
         public async Task<List<ComplaintForm>> GetComplaintFormsInBlock(Guid blockId)
         {
-            var complaintForms = await GetComplaintFormsAsync();
-            var complaintsInBlock = new List<ComplaintForm>();
-            foreach (var complaint in complaintForms)
-            {
-                if (complaint.BlockId == blockId)
-                {
-                    complaintsInBlock.Add(complaint);
-                }
-            }
-            return complaintsInBlock;
+            var complaints = await GetComplaintFormsAsync();
+            var complaintForms = complaints.Where(complaint => complaint.BlockId == blockId).ToList();
+
+            complaintForms = complaintForms.OrderBy(complaint => complaint.DateCreated).ToList();
+
+            return complaintForms;
         }
 
         public async Task<List<ComplaintForm>> GetComplaintFormsInHall(Guid hallId)
         {
-            var complaintForms = await GetComplaintFormsAsync();
-            var complaintsInHall = new List<ComplaintForm>();
-            foreach (var complaint in complaintForms)
-            {
-                if (complaint.HallId == hallId)
-                {
-                    complaintsInHall.Add(complaint);
-                }
-            }
-            return complaintsInHall;
+            var complaints = await GetComplaintFormsAsync();
+            var complaintForms = complaints.Where(complaint => complaint.HallId == hallId).ToList();
+
+            complaintForms = complaintForms.OrderBy(complaint => complaint.DateCreated).ToList();
+            
+            return complaintForms;
         }
 
         public async Task<List<ComplaintForm>> GetComplaintFormsInRoom(Guid roomId)
         {
-            var complaintForms = await GetComplaintFormsAsync();
-            var complaintsInRoom = new List<ComplaintForm>();
-            foreach (var complaint in complaintForms)
-            {
-                if (complaint.RoomId == roomId)
-                {
-                    complaintsInRoom.Add(complaint);
-                }
-            }
-            return complaintsInRoom;
+            var complaints = await GetComplaintFormsAsync();
+            var complaintForms = complaints.Where(complaint => complaint.RoomId == roomId).ToList();
+
+            complaintForms = complaintForms.OrderBy(complaint => complaint.DateCreated).ToList();
+
+            return complaintForms;
         }
 
         public async Task<ComplaintForm> UpdateComplaintForm(Guid complaintFormId, ComplaintForm request)

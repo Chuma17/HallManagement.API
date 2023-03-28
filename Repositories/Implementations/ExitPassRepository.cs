@@ -56,16 +56,10 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 return null;
             }
-
-            List<ExitPass> approvedExitPasses = new List<ExitPass>();
-            foreach (var exitPass in exitPasses)
-            {
-                if (exitPass.IsApproved)
-                {
-                    approvedExitPasses.Add(exitPass);
-                }
-            }
-            return approvedExitPasses;
+            var approved = exitPasses.Where(exitPass => exitPass.IsApproved).ToList();
+            approved = approved.OrderBy(exitPass => exitPass.DateIssued).ToList();
+            
+            return approved;
         }
 
         public async Task<ExitPass> GetExitPass(Guid exitPassId)
@@ -101,16 +95,11 @@ namespace HallManagementTest2.Repositories.Implementations
 
         public async Task<List<ExitPass>> GetExitPassesInHall(Guid hallId)
         {
-            var exitPasses = await GetExitPassesAsync();
-            List<ExitPass> hallExitPasses = new List<ExitPass>();
-            foreach (var exitPass in exitPasses)
-            {
-                if (exitPass.HallId == hallId)
-                {
-                    hallExitPasses.Add(exitPass);
-                }
-            }
-            return hallExitPasses;
+            var exitPass = await GetExitPassesAsync();
+            var exitPasses = exitPass.Where(exitPass => exitPass.HallId == hallId).ToList();
+
+            exitPasses = exitPasses.OrderBy(exitPass => exitPass.DateIssued).ToList();
+            return exitPasses;
         }
 
         public async Task<List<ExitPass>> GetPendingExitPassesAsync(Guid hallId)
@@ -140,14 +129,9 @@ namespace HallManagementTest2.Repositories.Implementations
                 return null;
             }
 
-            List<ExitPass> studentsDue = new List<ExitPass>();
-            foreach (var exitPass in exitPasses)
-            {
-                if (exitPass.IsApproved && exitPass.DateOfReturn.Day == DateTime.Now.Day)
-                {
-                    studentsDue.Add(exitPass);
-                }
-            }
+            var studentsDue = exitPasses.Where(exitPass => exitPass.DateOfReturn.Day == DateTime.Now.Day && exitPass.IsApproved).ToList();
+            studentsDue = studentsDue.OrderBy(students => students.DateIssued).ToList();
+         
             return studentsDue;
         }
 
@@ -159,14 +143,9 @@ namespace HallManagementTest2.Repositories.Implementations
                 return null;
             }
 
-            List<ExitPass> studentsOverDue = new List<ExitPass>();
-            foreach (var exitPass in exitPasses)
-            {
-                if (exitPass.IsApproved && DateTime.Now.Day > exitPass.DateOfReturn.Day && !exitPass.HasReturned)
-                {
-                    studentsOverDue.Add(exitPass);
-                }
-            }
+            var studentsOverDue = exitPasses.Where(exitPass => exitPass.IsApproved && DateTime.Now.Day > exitPass.DateOfReturn.Day && !exitPass.HasReturned).ToList();
+            studentsOverDue = studentsOverDue.OrderBy(students => students.DateIssued).ToList();
+            
             return studentsOverDue;
         }
 

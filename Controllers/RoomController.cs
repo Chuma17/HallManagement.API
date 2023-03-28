@@ -62,7 +62,7 @@ namespace HallManagementTest2.Controllers
             }
 
             return Ok(room);
-        }
+        }        
 
         //Add room
         [HttpPost("add-room"), Authorize(Roles = "HallAdmin")]

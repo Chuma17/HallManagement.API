@@ -15,15 +15,11 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Hall> GetHallAsync(Guid? hallId);
         Task<List<Hall>> GetHallsByGender(string gender);
         Task<List<Hall>> GetUnassignedHalls(string gender);
-        Task<List<Hall>> GetAssignedHalls(string gender);
+        Task<List<Hall>> GetAssignedHallsForPorters(string gender);
+        Task<List<Hall>> GetAssignedHalls(string gender, Guid hallTypeId);
         Task<Hall> DeleteHallAsync(Guid hallId);
         Task<Hall> GetStudentsInHallAsync(Guid hallId);
-        Task<Hall> GetPortersInHallAsync(Guid hallId);
-        Task<Hall> GetRoomsInHallAsync(Guid hallId);
-        Task<Hall> GetBlocksInHallAsync(Guid hallId);
+        Task<Hall> GetPortersInHallAsync(Guid hallId);       
         Task<Hall> GetStudentDevicesInHallAsync(Guid hallId);
-        Task<Hall> GetComplaintFormsInHallAsync(Guid hallId);
-        Task<Hall> GetNotificationInHallAsync(Guid hallId);
-        Task<Hall> GetExitPassesInHallAsync(Guid hallId);
     }
 }

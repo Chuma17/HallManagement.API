@@ -216,10 +216,10 @@ namespace HallManagementTest2.Controllers
         {
             var hallAdmin = await _hallAdminRepository.GetHallAdminByUserName(loginRequest.UserName);
             if (hallAdmin == null)
-                return BadRequest(new { message = "Email or password is incorrect" });
+                return BadRequest(new { message = "Username is incorrect" });
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, hallAdmin.PasswordHash, hallAdmin.PasswordSalt))
-                return BadRequest(new { message = "UserName or password is incorrect" });
+                return BadRequest(new { message = "Password is incorrect" });
 
             string token = _authService.CreateHallAdminToken(hallAdmin);
             hallAdmin.AccessToken = token;

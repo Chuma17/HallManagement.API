@@ -150,18 +150,22 @@ namespace HallManagementTest2.Controllers
         }
 
         //Updating a porter Record
-        [HttpPut("update-Porter/{porterId:guid}"), Authorize(Roles = "Porter")]
-        public async Task<IActionResult> UpdatePorterAsync([FromRoute] Guid porterId, [FromBody] UpdatePorterRequest request)
+        [HttpPut("update-Porter"), Authorize(Roles = "Porter")]
+        public async Task<IActionResult> UpdatePorterAsync([FromBody] UpdatePorterRequest request)
         {
-            if (await _porterRepository.Exists(porterId))
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            if (await _porterRepository.Exists(currentUserIdGuid))
             {
                 //Update Details
-                var updatedPorter = await _porterRepository.UpdatePorter(porterId, _mapper.Map<Porter>(request));
+                var updatedPorter = await _porterRepository.UpdatePorter(currentUserIdGuid, _mapper.Map<Porter>(request));
 
                 if (updatedPorter != null)
                 {
-                    var UpdatedPorter = _mapper.Map<Porter>(updatedPorter);                    
-
                     return Ok("Account updated successfully");
                 }
             }
@@ -175,10 +179,10 @@ namespace HallManagementTest2.Controllers
         {
             var porter = await _porterRepository.GetPorterByUserName(loginRequest.UserName);
             if (porter == null)
-                return BadRequest(new { message = "Email or password is incorrect" });
+                return BadRequest(new { message = "Username is incorrect" });
 
             if (!_authService.VerifyPasswordHash(loginRequest.Password, porter.PasswordHash, porter.PasswordSalt))
-                return BadRequest(new { message = "UserName or password is incorrect" });
+                return BadRequest(new { message = "Password is incorrect" });
 
             string token = _authService.CreatePorterToken(porter);
             porter.AccessToken = token;

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HallManagementTest2.Models;
+using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
@@ -144,6 +145,21 @@ namespace HallManagementTest2.Controllers
             return Forbid();
         }
 
+        //Get Exit Passes in hall
+        [HttpGet("get-exitPasses-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> GetNotificationsInHall([FromRoute] Guid hallId)
+        {
+            var hall = await _hallRepository.GetHallAsync(hallId);
+            if (hall == null)
+            {
+                return BadRequest("Hall does not exist");
+            }
+
+            var exitPasses = await _exitPassRepository.GetExitPassesInHall(hallId);
+
+            return Ok(exitPasses);
+        }
+
         //filter all approved exit pass
         [HttpGet("get-approved-exitPasses"), Authorize(Roles = "HallAdmin")]
         public async Task<IActionResult> GetApprovedExitPass()
@@ -206,7 +222,32 @@ namespace HallManagementTest2.Controllers
                         return NotFound();
                     }
 
-                    return Ok(exitPasses1);
+                    var studentsArray = new List<object>();
+
+                    foreach (var students in exitPasses1)
+                    {
+                        var student = await _studentRepository.GetStudentAsync(students.StudentId);
+                        var exitPass = await _exitPassRepository.GetExitPass(students.ExitPassId);
+                        var exitDate = exitPass.DateOfExit.ToString();
+                        var returnDate = exitPass.DateOfReturn.ToString();
+                        var dateIssued = exitPass.DateIssued.ToString();
+
+                        var studentList = new
+                        {
+                            student.StudentId,
+                            student.MatricNo,
+                            student.FirstName,
+                            student.LastName,
+                            exitDate,
+                            returnDate,
+                            dateIssued,
+                            student.StudyLevel,
+                        };
+
+                        studentsArray.Add(studentList);
+                    }
+
+                    return Ok(studentsArray.ToArray());
                 }
 
                 var porter = await _porterRepository.GetPorter(currentUserIdGuid);
@@ -218,7 +259,32 @@ namespace HallManagementTest2.Controllers
                         return NotFound();
                     }
 
-                    return Ok(exitPasses);
+                    var studentsArray = new List<object>();
+
+                    foreach (var students in exitPasses)
+                    {
+                        var student = await _studentRepository.GetStudentAsync(students.StudentId);
+                        var exitPass = await _exitPassRepository.GetExitPass(students.ExitPassId);
+                        var exitDate = exitPass.DateOfExit.ToString();
+                        var returnDate = exitPass.DateOfReturn.ToString();
+                        var dateIssued = exitPass.DateIssued.ToString();
+
+                        var studentList = new
+                        {
+                            student.StudentId,
+                            student.MatricNo,
+                            student.FirstName,
+                            student.LastName,
+                            exitDate,
+                            returnDate,
+                            dateIssued,
+                            student.StudyLevel,
+                        };
+
+                        studentsArray.Add(studentList);
+                    }
+
+                    return Ok(studentsArray.ToArray());
                 }
             }
 
@@ -241,7 +307,32 @@ namespace HallManagementTest2.Controllers
                         return NotFound();
                     }
 
-                    return Ok(exitPasses1);
+                    var studentsArray = new List<object>();
+
+                    foreach (var students in exitPasses1)
+                    {
+                        var student = await _studentRepository.GetStudentAsync(students.StudentId);
+                        var exitPass = await _exitPassRepository.GetExitPass(students.ExitPassId);
+                        var exitDate = exitPass.DateOfExit.ToString();
+                        var returnDate = exitPass.DateOfReturn.ToString();
+                        var dateIssued = exitPass.DateIssued.ToString();
+
+                        var studentList = new
+                        {
+                            student.StudentId,
+                            student.MatricNo,
+                            student.FirstName,
+                            student.LastName,
+                            exitDate,
+                            returnDate,
+                            dateIssued,
+                            student.StudyLevel,
+                        };
+
+                        studentsArray.Add(studentList);
+                    }
+
+                    return Ok(studentsArray.ToArray());
                 }
 
                 var porter = await _porterRepository.GetPorter(currentUserIdGuid);
@@ -253,7 +344,32 @@ namespace HallManagementTest2.Controllers
                         return NotFound();
                     }
 
-                    return Ok(exitPasses);
+                    var studentsArray = new List<object>();
+
+                    foreach (var students in exitPasses)
+                    {
+                        var student = await _studentRepository.GetStudentAsync(students.StudentId);
+                        var exitPass = await _exitPassRepository.GetExitPass(students.ExitPassId);
+                        var exitDate = exitPass.DateOfExit.ToString();
+                        var returnDate = exitPass.DateOfReturn.ToString();
+                        var dateIssued = exitPass.DateIssued.ToString();
+
+                        var studentList = new
+                        {
+                            student.StudentId,
+                            student.MatricNo,
+                            student.FirstName,
+                            student.LastName,
+                            exitDate,
+                            returnDate,
+                            dateIssued,
+                            student.StudyLevel,
+                        };
+
+                        studentsArray.Add(studentList);
+                    }
+
+                    return Ok(studentsArray.ToArray());
                 }
             }
 

@@ -8,6 +8,8 @@
         public string? Carpentary { get; set; }
         public string? Electrical { get; set; }
         public string? Others { get; set; }
+        public DateTime DateCreated { get; set; } = DateTime.Now;
+
 
 
         public Guid HallId { get; set; }

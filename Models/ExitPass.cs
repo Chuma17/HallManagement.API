@@ -11,6 +11,7 @@ namespace HallManagementTest2.Models
         public bool IsApproved { get; set; } = false;
         public DateTime DateOfExit { get; set; }
         public DateTime DateOfReturn { get; set; }
+        public DateTime DateIssued { get; set; } = DateTime.Now;
         public string? ReasonForLeaving { get; set; }
         public string? StateOfArrival { get; set; }
         public string? Address { get; set; }

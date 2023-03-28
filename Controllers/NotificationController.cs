@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using HallManagementTest2.Models;
+using HallManagementTest2.Repositories.Implementations;
 using HallManagementTest2.Repositories.Interfaces;
 using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
@@ -81,5 +82,19 @@ namespace HallManagementTest2.Controllers
             return BadRequest("User must be authenticated first");
         }
 
+        //Get Notifications in hall
+        [HttpGet("get-notifications-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> GetNotificationsInHall([FromRoute] Guid hallId)
+        {
+            var hall = await _hallRepository.GetHallAsync(hallId);
+            if (hall == null)
+            {
+                return BadRequest("Hall does not exist");
+            }
+
+            var notifications = await _notificationRepository.GetNotificationInHall(hallId);
+
+            return Ok(notifications);
+        }
     }
 }

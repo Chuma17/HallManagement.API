@@ -32,7 +32,7 @@ namespace HallManagementTest2.Controllers
         [HttpGet("get-rooms-in-block/{blockId:guid}")]
         public async Task<IActionResult> GetRoomsInBlockAsync([FromRoute] Guid blockId)
         {           
-            var roomsInBlock = await _roomRepository.GetRoomsInBlockAsync(blockId, "RoomNumber");
+            var roomsInBlock = await _roomRepository.GetRoomsInBlockAsync(blockId);
             if (roomsInBlock == null)
             {
                 return NotFound();

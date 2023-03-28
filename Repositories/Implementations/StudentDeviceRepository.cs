@@ -14,7 +14,7 @@ namespace HallManagementTest2.Repositories.Implementations
         private readonly IStudentDeviceRepository _studentDeviceRepository;
 
         public StudentDeviceRepository(ApplicationDbContext context, IHallRepository hallRepository
-                                        , IStudentRepository studentRepository)
+                                        ,IStudentRepository studentRepository)
         {
             _context = context;
             _hallRepository = hallRepository;

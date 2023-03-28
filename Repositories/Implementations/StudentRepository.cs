@@ -143,13 +143,11 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 existingStudent.FirstName = request.FirstName;
                 existingStudent.LastName = request.LastName;
-                existingStudent.Gender = request.Gender;
                 existingStudent.Course = request.Course;
+                existingStudent.Email = request.Email;
                 existingStudent.Department = request.Department;                
                 existingStudent.UserName = request.UserName;
-                existingStudent.StudyLevel = request.StudyLevel;
-                existingStudent.HallId = request.HallId;
-                existingStudent.RoomId = request.RoomId;
+                existingStudent.StudyLevel = request.StudyLevel;               
 
                 await _context.SaveChangesAsync();
                 return existingStudent;

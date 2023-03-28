@@ -16,7 +16,9 @@ namespace HallManagementTest2.Models
         public string? RoomGender { get; set; }
         public bool IsUnderMaintenance { get; set; } = false;
         public bool IsFull { get; set; } = false;
-        
+        public DateTime DateCreated { get; set; } = DateTime.Now;
+
+
         public virtual ICollection<Student>? Students { get; set; }
     }
 }

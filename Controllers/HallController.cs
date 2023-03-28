@@ -67,12 +67,12 @@ namespace HallManagementTest2.Controllers
             }
 
             var hallAdmin = await _hallAdminRepository.GetHallAdminByHall(hallId);
-            var hallType = await _hallTypeRepository.GetHallTypeForHall(hall.HallTypeId);
+            var hallType = await _hallTypeRepository.GetHallTypeForHall(hall.HallTypeId);            
 
             object hallDetails = new
             {
                 hall.HallId,
-                HallAdminName = hallAdmin?.FirstName ?? "Not Available",
+                hallAdminName = hallAdmin.FirstName + " " + hallAdmin.LastName ?? "empty",
                 HallType = hallType?.Description ?? "empty",
                 hall.RoomCount,
                 hall.AvailableRooms,
@@ -102,12 +102,27 @@ namespace HallManagementTest2.Controllers
             return Ok(halls);
         }
 
-        //Retrieving assigned halls
-        [HttpGet("get-assigned-halls"), Authorize(Roles = "ChiefHallAdmin")]
-        public async Task<IActionResult> GetAssignedHalls()
+        //Retrieving assigned halls for porters
+        [HttpGet("get-assigned-halls"), Authorize]
+        public async Task<IActionResult> GetAssignedHallsForPorters()
         {
             var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
-            var halls = await _hallRepository.GetAssignedHalls(currentUserGender);
+            var halls = await _hallRepository.GetAssignedHallsForPorters(currentUserGender);
+
+            if (halls == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(halls);
+        }
+        
+        //Retrieving assigned halls
+        [HttpGet("get-assigned-halls/{hallTypeId:guid}"), Authorize]
+        public async Task<IActionResult> GetAssignedHalls([FromRoute] Guid hallTypeId)
+        {
+            var currentUserGender = User.FindFirstValue(ClaimTypes.Gender);
+            var halls = await _hallRepository.GetAssignedHalls(currentUserGender, hallTypeId);
 
             if (halls == null)
             {
@@ -198,23 +213,21 @@ namespace HallManagementTest2.Controllers
         [HttpGet("get-rooms-in-hall/{hallId:guid}")]
         public async Task<IActionResult> GetRoomsInHallAsync([FromRoute] Guid hallId)
         {
-            var roomsInHall = await _hallRepository.GetRoomsInHallAsync(hallId);
+            var roomsInHall = await _roomRepository.GetRoomsInHall(hallId);
 
             if (roomsInHall == null)
             {
                 return NotFound();
-            }
+            }            
 
-            var rooms = roomsInHall.Rooms;
-
-            return Ok(rooms);
+            return Ok(roomsInHall);
         }
 
         //Retrieving blocks in a single hall
         [HttpGet("get-blocks-in-hall/{hallId:guid}")]
         public async Task<IActionResult> GetBlocksInHallAsync([FromRoute] Guid hallId)
-        {            
-            var blocksInHall = await _blockRepository.GetBlocksInHall(hallId, "BlockName");
+        {
+            var blocksInHall = await _blockRepository.GetBlocksInHall(hallId);
             if (blocksInHall == null)
             {
                 return NotFound();
@@ -237,52 +250,7 @@ namespace HallManagementTest2.Controllers
             var devices = studentDevicesInHall.StudentDevices;
 
             return Ok(devices);
-        }
-
-        //Retrieving complaint forms in a single hall
-        [HttpGet("get-complaintForms-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
-        public async Task<IActionResult> GetComplaintFormsInHallAsync([FromRoute] Guid hallId)
-        {
-            var complaintFormsInHall = await _hallRepository.GetComplaintFormsInHallAsync(hallId);
-
-            if (complaintFormsInHall == null)
-            {
-                return NotFound();
-            }
-
-            var complaints = complaintFormsInHall.ComplaintForms;
-
-            return Ok(complaints);
-        }
-
-        //Retrieving notifications in a single hall
-        [HttpGet("get-notifications-in-hall/{hallId:guid}")]
-        public async Task<IActionResult> GetNotificationsInHallAsync([FromRoute] Guid hallId)
-        {
-            var notificationsInHall = await _notificationRepository.GetNotificationInHall(hallId, "DateCreated");
-            if (notificationsInHall == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(notificationsInHall);
-        }
-
-        //Retrieving exit passes in a single hall
-        [HttpGet("get-exitPasses-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
-        public async Task<IActionResult> GetExitPassesInHallAsync([FromRoute] Guid hallId)
-        {
-            var exitPassesInHall = await _hallRepository.GetExitPassesInHallAsync(hallId);
-
-            if (exitPassesInHall == null)
-            {
-                return NotFound();
-            }
-
-            var notifications = exitPassesInHall.ExitPasses;
-
-            return Ok(notifications);
-        }
+        }                        
 
         //Add hall
         [HttpPost("add-hall"), Authorize(Roles = "ChiefHallAdmin")]
@@ -342,7 +310,7 @@ namespace HallManagementTest2.Controllers
                     await _complaintFormRepository.DeleteComplaintForm(complaint.ComplaintFormId);
                 }
 
-                var notifications = await _notificationRepository.GetNotificationInHall(hallId, "DateCreated");
+                var notifications = await _notificationRepository.GetNotificationInHall(hallId);
                 foreach (var notification in notifications)
                 {
                     await _notificationRepository.DeleteNotification(notification.NotiFicationId);
@@ -366,7 +334,7 @@ namespace HallManagementTest2.Controllers
                     await _roomRepository.DeleteRoomAsync(room.RoomId);
                 }
 
-                var blocks = await _blockRepository.GetBlocksInHall(hallId, "BlockName");
+                var blocks = await _blockRepository.GetBlocksInHall(hallId);
                 foreach (var block in blocks)
                 {
                     await _blockRepository.DeleteBlockAsync(block.BlockId);
@@ -378,6 +346,6 @@ namespace HallManagementTest2.Controllers
 
             return NotFound();
         }
-        
+
     }
 }

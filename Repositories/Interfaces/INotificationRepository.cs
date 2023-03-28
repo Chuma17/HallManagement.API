@@ -9,6 +9,6 @@ namespace HallManagementTest2.Repositories.Interfaces
         Task<Notification> DeleteNotification(Guid notificationId);
         Task<Notification> GetNotification(Guid notificationId);
         Task<Notification> UpdateNotification(Guid notificationId, Notification request);
-        Task<List<Notification>> GetNotificationInHall(Guid hallId, string orderBy);
+        Task<List<Notification>> GetNotificationInHall(Guid hallId);
     }
 }

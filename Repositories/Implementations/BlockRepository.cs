@@ -50,20 +50,13 @@ namespace HallManagementTest2.Repositories.Implementations
             return blocks;
         }
 
-        public async Task<List<Block>> GetBlocksInHall(Guid hallId, string orderBy)
+        public async Task<List<Block>> GetBlocksInHall(Guid hallId)
         {
             var blocks = await GetBlocksAsync();
             var blocksInHall = blocks.Where(block => block.HallId == hallId).ToList();
 
-            switch (orderBy)
-            {
-                case "BlockName":
-                    blocksInHall = blocksInHall.OrderBy(block => block.BlockName).ToList();
-                    break;
-                default:
-                    break;
-            }
-            
+            blocksInHall = blocksInHall.OrderBy(block => block.BlockName).ToList();
+
             return blocksInHall;
         }
 
@@ -81,13 +74,13 @@ namespace HallManagementTest2.Repositories.Implementations
                 existingBlock.BlockGender = request.BlockGender;
                 existingBlock.RoomSpace = request.RoomSpace;
                 existingBlock.AvailableRooms = request.AvailableRooms;
-                existingBlock.RoomCount= request.RoomCount;
+                existingBlock.RoomCount = request.RoomCount;
                 existingBlock.StudentCount = request.StudentCount;
 
                 await _context.SaveChangesAsync();
                 return existingBlock;
             }
             return null;
-        }        
+        }
     }
 }
