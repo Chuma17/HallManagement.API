@@ -86,14 +86,12 @@ namespace HallManagementTest2.Repositories.Implementations
             return studentDevices;            
         }
 
-        public async Task<StudentDevice> UpdateStudentDevice(Guid studentDeviceId, StudentDevice request)
+        public async Task<StudentDevice> UpdateDeviceStatus(Guid studentDeviceId, StudentDevice request)
         {
             var existingstudentDevice = await GetStudentDeviceAsync(studentDeviceId);
             if (existingstudentDevice != null)
             {
-                existingstudentDevice.HallId = request.HallId;
-                existingstudentDevice.StudentId = request.StudentId;
-                existingstudentDevice.MatricNo = request.MatricNo;
+                existingstudentDevice.IsApproved = request.IsApproved;                
 
                 await _context.SaveChangesAsync();
                 return existingstudentDevice;
@@ -113,6 +111,16 @@ namespace HallManagementTest2.Repositories.Implementations
                 }
             }
             return devicesInHall;
+        }
+
+        public async Task<List<StudentDevice>> GetPendingDevices(Guid hallId)
+        {
+            var devices = await GetStudentDevices();
+            var pendingDevices = devices.Where(device => device.IsApproved ==  false && device.HallId == hallId).ToList();
+
+            pendingDevices = pendingDevices.OrderBy(device => device.MatricNo).ToList();
+
+            return pendingDevices;
         }
     }
 }

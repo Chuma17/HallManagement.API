@@ -14,5 +14,6 @@ namespace HallManagementTest2.Models
         public string? Color { get; set; }
         public string? Description { get; set; }
         public string? SerialNo { get; set; }
+        public bool IsApproved { get; set; } = false;        
     }
 }

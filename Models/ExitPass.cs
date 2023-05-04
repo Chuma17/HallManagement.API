@@ -8,7 +8,7 @@ namespace HallManagementTest2.Models
         public Guid ExitPassId { get; set; }
         public Guid StudentId { get; set; }
         public Guid HallId { get; set; }
-        public bool IsApproved { get; set; } = false;
+        public string Status { get; set; } = "Pending";
         public DateTime DateOfExit { get; set; }
         public DateTime DateOfReturn { get; set; }
         public DateTime DateIssued { get; set; } = DateTime.Now;

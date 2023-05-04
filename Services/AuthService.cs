@@ -114,6 +114,7 @@ namespace HallManagementTest2.Services
             List<Claim> claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, hallAdmin.HallAdminId.ToString()),
+                new Claim(ClaimTypes.UserData, hallAdmin.HallId.ToString()),
                 new Claim(ClaimTypes.Role, hallAdmin.Role),
             };
 

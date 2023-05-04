@@ -255,5 +255,37 @@ namespace HallManagementTest2.Controllers
 
             return Ok(new { message = "Logout successful" });
         }
+
+        [HttpPost("change-password"), Authorize(Roles = "Porter")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+
+            var porter = await _porterRepository.GetPorter(currentUserIdGuid);
+
+            if (!_authService.VerifyPasswordHash(request.OldPassword, porter.PasswordHash, porter.PasswordSalt))
+            {
+                return BadRequest("Old Password is incorrect");
+            }
+
+            _authService.CreatePasswordHash(request.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
+
+            if (_authService.VerifyPasswordHash(request.NewPassword, porter.PasswordHash, porter.PasswordSalt))
+            {
+                return BadRequest("Please input a password different from the old one");
+            }
+
+            porter.PasswordHash = passwordHash;
+            porter.PasswordSalt = passwordSalt;
+
+            await _porterRepository.UpdatePorterPasswordHash(porter.PorterId, porter);
+
+            return Ok("Password Updated Successfully");
+        }
     }
 }

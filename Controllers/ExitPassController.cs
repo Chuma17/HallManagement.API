@@ -115,8 +115,8 @@ namespace HallManagementTest2.Controllers
                 HallName = hall?.HallName ?? "empty",
                 StudentName = fullName ?? "empty",
                 StudentMatricNo = student?.MatricNo ?? "empty",
-                exitPass.IsApproved,
-                exitPass.HasReturned,                
+                exitPass.Status,
+                exitPass.HasReturned,
             };
 
             return Ok(exitPassDetails);
@@ -139,7 +139,7 @@ namespace HallManagementTest2.Controllers
                     }
 
                     return Ok(exitPasses);
-                }                                           
+                }
             }
 
             return Forbid();
@@ -160,7 +160,7 @@ namespace HallManagementTest2.Controllers
             return Ok(exitPasses);
         }
 
-        //filter all approved exit pass
+        //get approved exit pass
         [HttpGet("get-approved-exitPasses"), Authorize(Roles = "HallAdmin")]
         public async Task<IActionResult> GetApprovedExitPass()
         {
@@ -176,8 +176,27 @@ namespace HallManagementTest2.Controllers
                         return NotFound();
                     }
 
-                    return Ok(exitPasses);
-                }                
+                    var studentsArray = new List<object>();
+
+                    foreach (var student in exitPasses)
+                    {
+                        var students = await _studentRepository.GetStudentAsync(student.StudentId);
+
+                        var studentList = new
+                        {
+                            students.StudentId,                            
+                            students.StudyLevel,
+                            students.Department,
+                            student.DateOfExit,
+                            student.DateOfReturn,
+                            student.ExitPassId
+                        };
+
+                        studentsArray.Add(studentList);
+                    }
+
+                    return Ok(studentsArray.ToArray());
+                }
             }
 
             return Forbid();
@@ -194,6 +213,29 @@ namespace HallManagementTest2.Controllers
                 if (hallAdmin != null)
                 {
                     var exitPasses = await _exitPassRepository.GetPendingExitPassesAsync(hallAdmin.HallId);
+                    if (exitPasses == null)
+                    {
+                        return NotFound();
+                    }
+
+                    return Ok(exitPasses);
+                }
+            }
+
+            return Forbid();
+        }
+
+        //get declined exit pass
+        [HttpGet("get-declined-exitPasses"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> GetDeclinedExitPass()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                var hallAdmin = await _hallAdminRepository.GetHallAdmin(currentUserIdGuid);
+                if (hallAdmin != null)
+                {
+                    var exitPasses = await _exitPassRepository.GetDeclinedExitPassesAsync(hallAdmin.HallId);
                     if (exitPasses == null)
                     {
                         return NotFound();
@@ -388,6 +430,20 @@ namespace HallManagementTest2.Controllers
 
             await _exitPassRepository.ApproveExitPass(exitPassId);
             return Ok("Exit Pass has been Approved!");
+        }
+
+        //Decline exit pass
+        [HttpPut("decline-exitPass/{exitPassId:guid}"), Authorize(Roles = "HallAdmin")]
+        public async Task<IActionResult> DeclineExitPass([FromRoute] Guid exitPassId)
+        {
+            var exitPass = await _exitPassRepository.GetExitPass(exitPassId);
+            if (exitPass == null)
+            {
+                return NotFound();
+            }
+
+            await _exitPassRepository.DeclineExitPass(exitPassId);
+            return Ok("Exit Pass has been Declined!");
         }
 
         //Update student status

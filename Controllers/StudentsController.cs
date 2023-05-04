@@ -265,22 +265,22 @@ namespace HallManagementTest2.Controllers
                 }
                 else
                 {
-                    student.IsBlocked = true;
                     if (student.RoomId != Guid.Empty)
                     {
-                        await LeaveRoom();
+                        return BadRequest("Student is still registered in a room");
                     }
 
                     else if (student.BlockId != Guid.Empty)
                     {
-                        await LeaveBlock();
+                        return BadRequest("Student is still registered in a block");
                     }
 
                     else if (student.HallId != Guid.Empty)
                     {
-                        await LeaveHall();
+                        return BadRequest("Student is still registered in a hall");
                     }
 
+                    student.IsBlocked = true;
                     return Ok("Student has been blocked successfully");
                 }
             }
@@ -753,6 +753,33 @@ namespace HallManagementTest2.Controllers
             Response.Cookies.Delete("refreshToken"); // Remove the refresh token cookie
 
             return Ok(new { message = "Logout successful" });
+        }
+
+        [HttpPost("change-password"), Authorize(Roles = "Student")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(currentUserId, out Guid currentUserIdGuid))
+            {
+                return Forbid();
+            }
+            
+            var student = await _studentRepository.GetStudentAsync(currentUserIdGuid);
+
+            if (!_authService.VerifyPasswordHash(request.OldPassword, student.PasswordHash, student.PasswordSalt))
+            {
+                return BadRequest(new { message = "Old Password is incorrect" });
+            }
+
+            _authService.CreatePasswordHash(request.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
+
+            student.PasswordHash = passwordHash;
+            student.PasswordSalt = passwordSalt;
+
+            await _studentRepository.UpdateStudentPasswordHash(student.StudentId, student);
+
+            return Ok("Password Updated Successfully");
         }
     }
 }

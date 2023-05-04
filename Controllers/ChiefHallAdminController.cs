@@ -141,6 +141,7 @@ namespace HallManagementTest2.Controllers
         public async Task<ActionResult<ChiefHallAdmin>> Login([FromBody] LoginRequest loginRequest)
         {
             var chiefHallAdmin = await _chiefHallAdminRepository.GetChiefHallAdminByUserName(loginRequest.UserName);
+
             if (chiefHallAdmin == null)
                 return BadRequest(new { message = "Username is incorrect" });
 
@@ -162,6 +163,7 @@ namespace HallManagementTest2.Controllers
                 chiefHallAdmin.Gender,
                 chiefHallAdmin.FirstName, 
                 chiefHallAdmin.LastName, 
+                chiefHallAdmin.Email,
                 chiefHallAdmin.Role, 
                 chiefHallAdmin.AccessToken, 
                 chiefHallAdmin.RefreshToken,

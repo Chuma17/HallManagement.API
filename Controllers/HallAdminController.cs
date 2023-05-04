@@ -240,6 +240,7 @@ namespace HallManagementTest2.Controllers
                 hallAdmin.LastName,
                 HallName = hall?.HallName ?? "empty",
                 hallAdmin.HallId,
+                hallAdmin.Email,
                 hallAdmin.Role,
                 hallAdmin.AccessToken,
                 hallAdmin.RefreshToken,

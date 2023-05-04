@@ -83,7 +83,7 @@ namespace HallManagementTest2.Controllers
         }
 
         //Get Notifications in hall
-        [HttpGet("get-notifications-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin")]
+        [HttpGet("get-notifications-in-hall/{hallId:guid}"), Authorize(Roles = "HallAdmin,Student")]
         public async Task<IActionResult> GetNotificationsInHall([FromRoute] Guid hallId)
         {
             var hall = await _hallRepository.GetHallAsync(hallId);

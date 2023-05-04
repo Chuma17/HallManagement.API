@@ -27,7 +27,20 @@ namespace HallManagementTest2.Repositories.Implementations
             var existingPass = await GetExitPass(exitPassId);
             if (existingPass != null)
             {
-                existingPass.IsApproved = true;
+                existingPass.Status = "Approved";
+
+                await _context.SaveChangesAsync();
+                return existingPass;
+            }
+            return null;
+        }
+
+        public async Task<ExitPass> DeclineExitPass(Guid exitPassId)
+        {
+            var existingPass = await GetExitPass(exitPassId);
+            if (existingPass != null)
+            {
+                existingPass.Status = "Declined";
 
                 await _context.SaveChangesAsync();
                 return existingPass;
@@ -56,10 +69,23 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 return null;
             }
-            var approved = exitPasses.Where(exitPass => exitPass.IsApproved).ToList();
+            var approved = exitPasses.Where(exitPass => exitPass.Status == "Approved").ToList();
             approved = approved.OrderBy(exitPass => exitPass.DateIssued).ToList();
             
             return approved;
+        }
+
+        public async Task<List<ExitPass>> GetDeclinedExitPassesAsync(Guid hallId)
+        {
+            var exitPasses = await GetExitPassesInHall(hallId);
+            if (exitPasses == null)
+            {
+                return null;
+            }
+            var declined = exitPasses.Where(exitPass => exitPass.Status == "Declined").ToList();
+            declined = declined.OrderBy(exitPass => exitPass.DateIssued).ToList();
+
+            return declined;
         }
 
         public async Task<ExitPass> GetExitPass(Guid exitPassId)
@@ -109,16 +135,10 @@ namespace HallManagementTest2.Repositories.Implementations
             {
                 return null;
             }
+            var pending = exitPasses.Where(exitPass => exitPass.Status == "Pending" && exitPass.DateOfExit < DateTime.Now).ToList();
+            pending = pending.OrderBy(exitPass => exitPass.DateIssued).ToList();
 
-            List<ExitPass> pendingExitPasses = new List<ExitPass>();
-            foreach (var exitPass in exitPasses)
-            {
-                if (!exitPass.IsApproved && exitPass.DateOfExit < DateTime.Now)
-                {
-                    pendingExitPasses.Add(exitPass);
-                }
-            }
-            return pendingExitPasses;
+            return pending;                        
         }
 
         public async Task<List<ExitPass>> GetStudentsDueToReturn(Guid hallId)
@@ -129,7 +149,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 return null;
             }
 
-            var studentsDue = exitPasses.Where(exitPass => exitPass.DateOfReturn.Day == DateTime.Now.Day && exitPass.IsApproved).ToList();
+            var studentsDue = exitPasses.Where(exitPass => exitPass.DateOfReturn.Day == DateTime.Now.Day && exitPass.Status == "Approved").ToList();
             studentsDue = studentsDue.OrderBy(students => students.DateIssued).ToList();
          
             return studentsDue;
@@ -143,7 +163,7 @@ namespace HallManagementTest2.Repositories.Implementations
                 return null;
             }
 
-            var studentsOverDue = exitPasses.Where(exitPass => exitPass.IsApproved && DateTime.Now.Day > exitPass.DateOfReturn.Day && !exitPass.HasReturned).ToList();
+            var studentsOverDue = exitPasses.Where(exitPass => exitPass.Status == "Approved" && DateTime.Now.Day > exitPass.DateOfReturn.Day && !exitPass.HasReturned).ToList();
             studentsOverDue = studentsOverDue.OrderBy(students => students.DateIssued).ToList();
             
             return studentsOverDue;

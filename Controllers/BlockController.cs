@@ -7,6 +7,7 @@ using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HallManagementTest2.Controllers
 {
@@ -59,6 +60,12 @@ namespace HallManagementTest2.Controllers
         [HttpPost("add-block"), Authorize(Roles = "HallAdmin")]
         public async Task<ActionResult<Block>> AddBlock([FromBody] AddBlockRequest request)
         {
+            var hallId = User.FindFirstValue(ClaimTypes.UserData);
+            if (!Guid.TryParse(hallId, out Guid currenthallId))
+            {
+                return Forbid();
+            }
+
             var hallExists = await _hallRepository.Exists(request.HallId);
             if (!hallExists)
             {
@@ -67,7 +74,7 @@ namespace HallManagementTest2.Controllers
             var blocks = await _blockRepository.GetBlocksAsync();
             foreach (var block1 in blocks)
             {
-                if (request.BlockName.ToUpper() == block1.BlockName.ToUpper())
+                if (request.BlockName.ToUpper() == block1.BlockName.ToUpper() && Guid.Equals(block1.HallId, currenthallId))
                 {
                     return BadRequest("Block name already exists");
                 }

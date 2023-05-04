@@ -9,6 +9,7 @@ using HallManagementTest2.Requests.Add;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using HallManagementTest2.Requests;
+using System.Data.Common;
 
 namespace HallManagementTest2.Controllers
 {
@@ -69,7 +70,6 @@ namespace HallManagementTest2.Controllers
 
             studentDevice = await _studentDeviceRepository.AddStudentDeviceAsync(currentHallIdGuid, studentDevice);            
 
-            await _studentDeviceRepository.UpdateStudentDevice(studentDevice.StudentDeviceId, studentDevice);
             return Ok("The new device has been added successfully");
         }
 
@@ -86,5 +86,51 @@ namespace HallManagementTest2.Controllers
 
             return Ok(studentDevices);
         }
+
+        //Get pending StudentDevices
+        [HttpPost("get-pending-studentDevices"), Authorize(Roles = "Porter")]
+        public async Task<IActionResult> GetPendingStudentDevice()
+        {
+            var currentHallId = User.FindFirstValue(ClaimTypes.UserData);
+            if (!Guid.TryParse(currentHallId, out Guid currentHallIdGuid))
+            {
+                return Forbid();
+            }
+
+            var studentDevices = await _studentDeviceRepository.GetPendingDevices(currentHallIdGuid);
+
+            if (studentDevices == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(studentDevices);
+        }
+
+        //Updating Student Device Status
+        [HttpPut("update-device-status/{studentDeviceId:guid}"), Authorize(Roles = "Porter")]
+        public async Task<IActionResult> UpdateDeviceStatus([FromRoute] Guid studentDeviceId)
+        {
+            if (await _studentDeviceRepository.Exists(studentDeviceId))
+            {
+                var studentDevice = await _studentDeviceRepository.GetStudentDeviceAsync(studentDeviceId);
+                if (studentDevice.IsApproved)
+                {
+                    studentDevice.IsApproved = false;
+                    await _studentDeviceRepository.UpdateDeviceStatus(studentDeviceId, studentDevice);
+                    return Ok("Device has been unapproved");
+                }
+
+                else
+                {
+                    studentDevice.IsApproved = true;
+                    await _studentDeviceRepository.UpdateDeviceStatus(studentDeviceId, studentDevice);
+                    return Ok("Device has been approved");
+                }
+            }
+
+            return NotFound();
+        }
+
     }
 }
